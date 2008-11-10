@@ -1,0 +1,55 @@
+
+INSTALLATION
+
+You should probably check out current development brach:
+$ svn checkout http://evserver.googlecode.com/svn/trunk/ evserver
+
+Then, to use 'evserver' you just need to set your PYTHONPATH environment 
+variable, for example, if you have evserver sources installed in your home directory:
+$ PYTHONPATH="$HOME/evserver" python ./myscript.py
+
+If you must have egg package, you can get one:
+$ wget ""
+$ sudo easy_install evserver
+
+But beware, this packet has included a libevent.so binary, which is 32 bits only.
+
+
+COMPILATION
+
+This package needs libevent.so binary and automatically generated python wrapper 
+file for this specific version of libevent. Currently I include libevent 1.4.5
+32 bit files. If you need to use your own version of libevent, you must:
+  - install dependencies:
+    $ sudo apt-get install gccxml python-setuptools
+    $ sudo easy_install ctypeslib
+
+  - grab libevent sources. Libevent from 1.4.2 to 1.4.5 seems to be working. 1.4.1 had
+    an important bug in chunk encoding, 1.4.6 and newer have issues when receiving
+    timeouts on file descriptors. I use libevent-1.4.5. 
+    You need to compile the sources.
+    $ wget "http://monkey.org/~provos/libevent-1.4.5-stable.tar.gz"
+    $ tar xvzf libevent-1.4.5-stable.tar.gz
+    $ cd libevent-1.4.5
+    $ ./configure && make
+
+ - Run 'make ctypes' with LIBEVENTSOURCES environment variable set, for example:
+    $ LIBEVENTSOURCES=../libevent-1.4.5-stable make ctypes
+   Then, if you need to create egg, just run 'make egg'
+    $ LIBEVENTSOURCES=../libevent-1.4.5-stable make egg
+   Your package will be ready in 'dist' directory.
+
+
+RUNNING
+
+If you installed egg just try:
+ $ evserver
+
+If you haven't installed egg, only got the development branch in ~/evserver:
+ $ ~/evserver/evserver.py
+
+
+TESTS
+
+There are some working tests for the application. You can run them:
+ $ make test
