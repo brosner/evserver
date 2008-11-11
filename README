@@ -4,7 +4,7 @@ INSTALLATION
 You should probably check out current development brach:
 $ svn checkout http://evserver.googlecode.com/svn/trunk/ evserver
 
-Then, to use 'evserver' you just need to set your PYTHONPATH environment 
+Then, to use 'evserver' you just need to set your PYTHONPATH environment
 variable, for example, if you have evserver sources installed in your home directory:
 $ PYTHONPATH="$HOME/evserver" python ./myscript.py
 
@@ -17,7 +17,7 @@ But beware, this packet has included a libevent.so binary, which is 32 bits only
 
 COMPILATION
 
-This package needs libevent.so binary and automatically generated python wrapper 
+This package needs libevent.so binary and automatically generated python wrapper
 file for this specific version of libevent. Currently I include libevent 1.4.5
 32 bit files. If you need to use your own version of libevent, you must:
   - install dependencies:
@@ -26,7 +26,7 @@ file for this specific version of libevent. Currently I include libevent 1.4.5
 
   - grab libevent sources. Libevent from 1.4.2 to 1.4.5 seems to be working. 1.4.1 had
     an important bug in chunk encoding, 1.4.6 and newer have issues when receiving
-    timeouts on file descriptors. I use libevent-1.4.5. 
+    timeouts on file descriptors. I use libevent-1.4.5.
     You need to compile the sources.
     $ wget "http://monkey.org/~provos/libevent-1.4.5-stable.tar.gz"
     $ tar xvzf libevent-1.4.5-stable.tar.gz
@@ -53,3 +53,30 @@ TESTS
 
 There are some working tests for the application. You can run them:
  $ make test
+
+
+FEATURES
+
+The status panel is great. Just add '-s 127.0.0.1:9999' option when running eveserver,
+and see the status at url http://127.0.0.1:9999/
+
+
+
+
+BUGS
+
+ There are still some issues with this software:
+ - Despite long fight, there are still some memory leaks in libevent. The leaks are tiny, but take
+   them into consideration and think of restarting the worker processes once in few months.
+ -
+
+
+I FOUND A BUG!
+ That's great! It means that I'm still a human (I lost my certainty about this point).
+ Write a test case using our 'test.py' facility, then I'll try to fix a bug for free.
+ In the other case feel free to fix the bug yourself, I'd be happy to include your
+ changes. Just drop me the patch at majek04+evserver@gmail.com
+
+
+
+

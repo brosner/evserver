@@ -132,7 +132,6 @@ class Request:
         return self.out_dict, True, self.iterable_wrapper()
 
     def continue_wsgi_application(self, evt):
-        print "%r" % (self.iterable)
         assert(self.iterable)
         assert(self.suspended)
         assert(not self.event_key)

@@ -14,7 +14,10 @@ try:
 except OSError:
     pass
 
+last_proc = None
+
 def evserver_start(cmd):
+    global last_proc
     port = random.randint(32000,64000)
     fd = open('log','w')
     proc = subprocess.Popen(["./evserver/evserver.py", "--libevent=./evserver/libevent.so", "-n", "-vvv", "-l","127.0.0.1:%i" % port, "-e", cmd], stdout=fd.fileno())
@@ -35,11 +38,14 @@ def evserver_start(cmd):
         a = b.read()
         b.close()
         return a
+    last_proc = proc
     proc.data = x
     proc.ffdd = fd
     return sd, proc
 
 def evserver_stop(sd, proc):
+    global last_proc
+    last_proc = None
     proc.ffdd.close()
     sd.close()
     os.kill(proc.pid, signal.SIGKILL)
@@ -254,8 +260,11 @@ if __name__ == '__main__':
         except Exception, e:
             print str(traceback.format_exc()).strip()
             print "test %s: FAILED (%r)" % (t,e)
+            if last_proc:
+                os.kill(last_proc.pid, signal.SIGKILL)
             sys.exit(1)
         if ret:
             print "test %s: FAILED (%r)" % (t,ret)
             sys.exit(1)
         print "test %s: OK" % (t,)
+        sys.exit(0)

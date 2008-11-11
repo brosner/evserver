@@ -18,13 +18,6 @@ import dl
 import time
 from pkg_resources import resource_filename
 
-'''
-try:
-    import psyco
-    psyco.full()
-except ImportError:
-    pass
-'''
 
 log = logging.getLogger(os.path.basename(__file__))
 
@@ -40,35 +33,13 @@ def simple(environ, start_response):
     status = "200 OK"
     response_headers = [('Content-type','text/plain')]
     start_response(status, response_headers)
-    return ['Hello world!\n', 'asd']
-
-def simplem(environ, start_response):
-    status = "200 OK"
-    response_headers = [('Content-type','text/plain')]
-    start_response(status, response_headers)
-    return ( ('Hello world! (%i)\n' % i) for i in range(10) )
-
-def simplen(environ, start_response):
-    status = "200 OK"
-    response_headers = [('Content-type','text/plain')]
-    start_response(status, response_headers)
-    def iterator():
-        for i in range(10):
-            time.sleep(0.2)
-            yield 'Hello world! (%i)\n' % i
-    return iterator()
-
-def simpleo(environ, start_response):
-    status = "200 OK"
-    response_headers = [('Content-type','text/plain')]
-    start_response(status, response_headers)
     fd = os.open('fifo', os.O_RDONLY | os.O_NONBLOCK)
     yield 'Start!'
     i = 0
     for j in range(10):
         i = i + 1
         yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
-        yield '(%i/%r)' % (i, environ['x-wsgiorg.fdevent.timeout'])
+        yield '(%i)' % (i)
     os.close(fd)
     return
 
@@ -99,7 +70,6 @@ def wsgi_cherry_py():
     cherrypy.root = Root()
 
     cherrypy.server.start(initOnly=True, serverClass=None)
-    print 'asdada'
     return wsgiApp
 
 def wsgi_pylons():
@@ -110,11 +80,6 @@ def wsgi_pylons():
 FRAMEWORKS = {
     'django':lambda: django_wsgi.WSGIHandler(),
     'simple':lambda: simple,
-    'simplem':lambda: simplem,
-    'simplen':lambda: simplen,
-    'simpleo':lambda: simpleo,
-    'cherrypy':wsgi_cherry_py,
-    'pylons':wsgi_pylons,
 }
 
 
@@ -203,6 +168,9 @@ def main(args):
     parser.add_option("-s", "--status",
                       action="store", dest="statusaddr", default="",
                       help="Bind server status page to specified host:port")
+    parser.add_option("-p", "--psyco",
+                      action="store_true", dest="psyco",
+                      help="Try to enable Psyco just-in-time compiler.")
 
     (options, left_args) = parser.parse_args(args=args)
 
@@ -251,6 +219,15 @@ def main(args):
         logging.basicConfig(level=verbosity, format=FORMAT_FILE, filename=logfilename, filemode='a')
     else:
         logging.basicConfig(level=verbosity, format=FORMAT_CONS)
+
+    if options.psyco:
+        try:
+            import psyco
+            psyco.full()
+            log.info('Psyco enabled')
+        except ImportError:
+            log.error('Psyco import failed.')
+
 
     log.info("Running with verbosity %i (>=%s)" % (verbosity, logging.getLevelName(verbosity)))
     log.info("Framework=%r, Main dir=%r, args=%r" % (options.framework, os.getcwd(), args))
