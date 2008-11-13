@@ -281,6 +281,7 @@ class Request:
         else:
             raise BadRequest("Unknown request method")
 
+        # see: http://mail.python.org/pipermail/web-sig/2007-January/002475.html
         headers['PATH_INFO'], _, headers['QUERY_STRING'] = req.contents.uri.partition('?')
         #headers['SCRIPT_NAME'], suffix,  headers['PATH_INFO'] = headers['PATH_INFO'].rpartition('/')
         #headers['SCRIPT_NAME'] += suffix

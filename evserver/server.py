@@ -272,6 +272,7 @@ def main_loop( bindings ):
             log.critical("Bad host/port (host=%r port=%r) or address already in use" % (host,port))
             log.critical("QUITTING!")
             os.abort()
+        libevent.evhttp_set_timeout(http,60) # minute, that's just for the http stuff
         vhostdata = {
             'application':application,
             'counter':0,

@@ -24,10 +24,11 @@ log = logging.getLogger(os.path.basename(__file__))
 FORMAT_FILE = '%(asctime)s %(name)s[%(process)d] %(levelname)10s %(message)s'
 FORMAT_CONS = '%(asctime)s %(name)-12s %(levelname)8s\t%(message)s'
 
-try:
+def wsgi_django():
     import django.core.handlers.wsgi as django_wsgi
-except ImportError:
-    pass
+    from django.conf import settings
+    log.info("Running Django. DJANGO_SETTINGS_MODULE=%s, DEBUG=%s" % (os.getenv('DJANGO_SETTINGS_MODULE',''), settings.DEBUG))
+    return django_wsgi.WSGIHandler()
 
 def simple(environ, start_response):
     status = "200 OK"
@@ -78,7 +79,7 @@ def wsgi_pylons():
 
 # after called, should return valid ``wsg_application(environ, start_response)`` function
 FRAMEWORKS = {
-    'django':lambda: django_wsgi.WSGIHandler(),
+    'django':wsgi_django,
     'simple':lambda: simple,
 }
 
@@ -198,9 +199,15 @@ def main(args):
         except (ValueError,):
             parser.error("Status address ip:port in wrong format.")
 
+    # enable logging ASAP
+    if options.logfile:
+        logfilename = os.path.normpath(os.path.expanduser(options.logfile))
+        logging.basicConfig(level=verbosity, format=FORMAT_FILE, filename=logfilename, filemode='a')
+    else:
+        logging.basicConfig(level=verbosity, format=FORMAT_CONS)
+
     if options.framework and options.frameexec:
         parser.error("Please use --framework OR --exec option.")
-
     if options.framework:
         if options.framework not in FRAMEWORKS:
             parser.error("Framework %r not supported. Availble ones are [%s]." % (options.framework, '|'.join(sorted(FRAMEWORKS.keys()))))
@@ -212,13 +219,6 @@ def main(args):
             parser.error("variable application() not defined by your code in --exec option.")
     else:
         parser.error("Please specify --framework or --exec parameters.")
-
-
-    if options.logfile:
-        logfilename = os.path.normpath(os.path.expanduser(options.logfile))
-        logging.basicConfig(level=verbosity, format=FORMAT_FILE, filename=logfilename, filemode='a')
-    else:
-        logging.basicConfig(level=verbosity, format=FORMAT_CONS)
 
     if options.psyco:
         try:

@@ -4,8 +4,41 @@ import gc
 import os
 import resource
 import meminfo
+import objgraph
+import random
 
 def wsgi_application(environ, start_response):
+    if 'memleaks' in environ.get('PATH_INFO', ''):
+        return memleaks(environ, start_response)
+    else:
+        return status_page(environ, start_response)
+
+import inspect
+
+def memleaks(environ, start_response):
+    start_response("200 OK", [('Content-Type', 'text/plain')])
+    gc.collect()
+    gc.collect()
+    gc.collect()
+    b = objgraph.show_most_common_types(limit=50)
+    if not b:
+        b = []
+    #return ['\n'.join(map(str,b))] #[ '\n\n'.join(['\n'.join(map(str,b)), '\n'.join(map(str, ob)), '\n'.join(ch)] ) ]
+    ob = objgraph.by_type('tuple')
+    ab = []
+    if ob:
+        for i in range(10):
+            ab.append( ob[random.randint(0, len(ob)-1)] )
+    print '%r' % ab
+    if ab:
+        objgraph.show_backrefs(ab, max_depth=18)
+        #ch = objgraph.find_backref_chain(ob[0], inspect.ismodule)
+        #if ch:
+        #    ch = map(str, ch)
+        #else:
+    return ['\n'.join(map(str,b))] #[ '\n\n'.join(['\n'.join(map(str,b)), '\n'.join(map(str, ob)), '\n'.join(ch)] ) ]
+
+def status_page(environ, start_response):
     start_response("200 OK", [('Content-Type', 'text/plain'), ('Refresh', '3')])
     s = []
     resources = dict(zip(

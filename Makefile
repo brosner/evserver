@@ -111,7 +111,8 @@ ctypes:
 
 
 test:
-	 PYTHONPATH="." $(PYTHON) test.py
+	PYTHONPATH="." $(PYTHON) test.py
+	rm -f log
 
 prepare: clean ctypes
 

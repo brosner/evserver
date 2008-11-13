@@ -181,33 +181,39 @@ def test_iteratorstop_letend():
     evserver_stop(sd, proc)
 
 
-if False:
-    # this doesn't work for for new libevent
-    def application_iteratorstop(environ, start_response):
-        start_response("200 OK", [('Content-type','text/plain')])
-        fd = os.open('/dev/null', os.O_RDONLY | os.O_NONBLOCK)
-        try:
-            yield 'Start!'
-            for j in range(1):
-                yield environ['x-wsgiorg.fdevent.readable'](fd, 0.5)
-                yield '(%i)' % (j)
-        except GeneratorExit:
-            pass
-        os.close(fd)
+# this doesn't work for for new libevent
+def application_iteratorstop2(file):
+    def a(environ, start_response):
+       start_response("200 OK", [('Content-type','text/plain')])
+       fd = os.open(file, os.O_RDONLY | os.O_NONBLOCK)
+       try:
+           yield 'Start!'
+           for j in range(1):
+               yield environ['x-wsgiorg.fdevent.readable'](fd, 0.5)
+               yield '(%i)' % (j)
+       except GeneratorExit:
+           pass
+       os.close(fd)
+    return a
 
-    def test_iterator_devnull():
-        sd, proc = evserver_start("import test; application = test.application_iteratorstop")
+def test_iterator_fiel():
+    for file in ['/dev/null', '/etc/passwd']:
+        sd, proc = evserver_start("import test; application = test.application_iteratorstop2('%s')" % file)
 
-        sd.send("GET /test_iterator_devnull HTTP/1.1\n\r\n")
+        sd.send("GET /test_iterator_devnull HTTP/1.0\n\r\n")
         headers, _, payload = sd.recv(8192).partition('\r\n\r\n')
+        print "%r" % headers
+        print "%r" % payload
         assert(payload == 'Start!')
         assert('Content-Length:' not in headers)
-        assert('Connection: close' not in headers)
-        assert('Transfer-Encoding: chunked' in headers)
+        assert('Connection: close' in headers)
+        assert('Transfer-Encoding: chunked' not in headers)
         payload = sd.recv(8192) # wait
+        print "%r" % payload
         assert(payload == '(0)')
 
         evserver_stop(sd, proc)
+
 
 '''
 def test_headers_none():
@@ -255,6 +261,7 @@ def test_return_chunked_11_keepalive():
 
 if __name__ == '__main__':
     for t in [t for t in globals().keys() if (t.startswith('test') and callable(globals()[t])) ]:
+        print "**************** %s ***********" % t
         try:
             ret = globals()[t]()
         except Exception, e:
@@ -267,4 +274,4 @@ if __name__ == '__main__':
             print "test %s: FAILED (%r)" % (t,ret)
             sys.exit(1)
         print "test %s: OK" % (t,)
-        sys.exit(0)
+    sys.exit(0)
