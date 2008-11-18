@@ -16,6 +16,7 @@ import optparse
 import ctypes
 import dl
 import time
+import datetime
 from pkg_resources import resource_filename
 
 
@@ -30,27 +31,21 @@ def wsgi_django():
     log.info("Running Django. DJANGO_SETTINGS_MODULE=%s, DEBUG=%s" % (os.getenv('DJANGO_SETTINGS_MODULE',''), settings.DEBUG))
     return django_wsgi.WSGIHandler()
 
-def simple(environ, start_response):
-    status = "200 OK"
-    response_headers = [('Content-type','text/plain')]
-    start_response(status, response_headers)
-    fd = os.open('fifo', os.O_RDONLY | os.O_NONBLOCK)
-    yield 'Start!'
-    i = 0
-    for j in range(10):
-        i = i + 1
-        yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
-        yield '(%i)' % (i)
+def clock_demo(environ, start_response):
+    start_response("200 OK", [('Content-type','text/plain')])
+    # whatever empty file, we just want to receive a timeout
+    fd = os.open('/dev/null', os.O_RDONLY)
+    try:
+        while True:
+            yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
+            yield "%s\n" % (datetime.datetime.now(),)
+    except GeneratorExit:
+        pass
     os.close(fd)
     return
 
-def file(environ, start_response):
-    status = "200 OK"
-    response_headers = [('Content-type','text/plain')]
-    start_response(status, response_headers)
-    fd = open('/etc/passwd')
-    return fd
-
+'''
+# returning iterators doesn't work for turbogears and pylons, sorry
 def wsgi_cherry_py():
     import pkg_resources
     import cherrypy
@@ -76,11 +71,12 @@ def wsgi_cherry_py():
 def wsgi_pylons():
     from paste.deploy import loadapp
     return loadapp('config:%s' % (os.path.join(os.getcwd(), 'development.ini')))
+'''
 
 # after called, should return valid ``wsg_application(environ, start_response)`` function
 FRAMEWORKS = {
     'django':wsgi_django,
-    'simple':lambda: simple,
+    'demo':lambda: clock_demo,
 }
 
 
