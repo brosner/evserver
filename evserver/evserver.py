@@ -140,7 +140,7 @@ def find_libevent_binary(userpath):
 
 def main(args):
     usage = "usage: %prog [options]"
-    desc = "evserver - Asynchronous WSGI http server based on libevent"
+    desc = "evserver - Asynchronous WSGI http server usign libevent"
     parser = optparse.OptionParser(usage, description=desc)
     parser.add_option("-o", "--log", dest="logfile",
                       help="write the logs to the file")
@@ -220,7 +220,7 @@ def main(args):
         try:
             import psyco
             psyco.full()
-            log.info('Psyco enabled')
+            log.info('Psyco enabled.')
         except ImportError:
             log.error('Psyco import failed.')
 

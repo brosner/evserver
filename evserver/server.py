@@ -296,4 +296,3 @@ def main_loop( bindings ):
     utils.clear_ref()
 
 
-
