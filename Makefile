@@ -9,7 +9,7 @@ LIBEVENTOUT=evserver/libevent.so
 egg: eggs
 
 eggs:
-	$(PYTHON) setup.py bdist_egg
+	$(PYTHON) setup.py bdist_egg --plat-name=linux-i686
 
 clean:
 	find . -name "*.pyc" | xargs rm -f

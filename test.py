@@ -274,4 +274,5 @@ if __name__ == '__main__':
             print "test %s: FAILED (%r)" % (t,ret)
             sys.exit(1)
         print "test %s: OK" % (t,)
+    print "All tests finished with SUCCESS"
     sys.exit(0)
