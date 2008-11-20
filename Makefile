@@ -11,13 +11,21 @@ egg: eggs
 eggs:
 	$(PYTHON) setup.py bdist_egg --plat-name=linux-i686
 
+mrproper: fullclean
+
+fullclean: clean
+	rm -f $(CTYPESPY) $(LIBEVENTOUT)
+
 clean:
 	find . -name "*.pyc" | xargs rm -f
 	find . -name "*.pyo" | xargs rm -f
 	rm -rf build dist evserver.egg-info
-	rm -f $(CTYPESPY) $(LIBEVENTOUT)
 	rm -f /tmp/fifo
 	rm -f log
+
+propset: clean
+	find evserver Makefile *py README -type f -a -not -path \*.svn\* |xargs svn propset svn:mime-type 'text/plain'
+	svn propset svn:mime-type 'application/octet-stream' $(LIBEVENTOUT)
 
 # needs:
 #   sudo apt-get install gccxml python-setuptools

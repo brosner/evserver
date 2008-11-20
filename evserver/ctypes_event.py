@@ -10,37 +10,37 @@ _libraries['libevent.so'] = CDLL(libeventbinary)
 STRING = c_char_p
 
 
-def evtimer_pending(ev,tv): return event_pending(ev, EV_TIMEOUT, tv) # macro
-# def signal_initialized(ev): return ((ev)->ev_flags & EVLIST_INIT) # macro
+def EVUTIL_CLOSESOCKET(s): return close(s) # macro
+def EVUTIL_SOCKET_ERROR(): return (errno) # macro
+# def EVBUFFER_INPUT(x): return (x)->input # macro
+EVHTTP_REQ_GET = 0
+EVCON_HTTP_EOF = 1
+def signal_del(ev): return event_del(ev) # macro
+# def EVENT_FD(ev): return (int)(ev)->ev_fd # macro
 # def EVBUFFER_LENGTH(x): return (x)->off # macro
 # def EVUTIL_SET_SOCKET_ERROR(errcode): return do { errno = (errcode); } while (0) # macro
-def EVUTIL_CLOSESOCKET(s): return close(s) # macro
-EVCON_HTTP_EOF = 1
-EVHTTP_REQ_HEAD = 2
-def signal_del(ev): return event_del(ev) # macro
-def evtimer_set(ev,cb,arg): return event_set(ev, -1, 0, cb, arg) # macro
-# def EVENT_SIGNAL(ev): return (int)(ev)->ev_fd # macro
-EVHTTP_RESPONSE = 1
-# def evtimer_initialized(ev): return ((ev)->ev_flags & EVLIST_INIT) # macro
-EVCON_CONNECTED = 2
-# def EVBUFFER_OUTPUT(x): return (x)->output # macro
-def evtimer_add(ev,tv): return event_add(ev, tv) # macro
-EVCON_CONNECTING = 1
-# def EVBUFFER_INPUT(x): return (x)->input # macro
-def evtimer_del(ev): return event_del(ev) # macro
 EVCON_HTTP_TIMEOUT = 0
-EVCON_DISCONNECTED = 0
-EVCON_HTTP_INVALID_HEADER = 2
-def EVUTIL_SOCKET_ERROR(): return (errno) # macro
-EVHTTP_REQ_POST = 1
-# def EVENT_FD(ev): return (int)(ev)->ev_fd # macro
-EVHTTP_REQ_GET = 0
-# def EVBUFFER_DATA(x): return (x)->buffer # macro
-def signal_add(ev,tv): return event_add(ev, tv) # macro
 def signal_set(ev,x,cb,arg): return event_set(ev, x, EV_SIGNAL|EV_PERSIST, cb, arg) # macro
+EVCON_CONNECTING = 1
+# def EVBUFFER_DATA(x): return (x)->buffer # macro
+# def evtimer_initialized(ev): return ((ev)->ev_flags & EVLIST_INIT) # macro
+# def signal_initialized(ev): return ((ev)->ev_flags & EVLIST_INIT) # macro
 def signal_pending(ev,tv): return event_pending(ev, EV_SIGNAL, tv) # macro
+EVHTTP_RESPONSE = 1
+EVCON_HTTP_INVALID_HEADER = 2
+def evtimer_add(ev,tv): return event_add(ev, tv) # macro
+def evtimer_set(ev,cb,arg): return event_set(ev, -1, 0, cb, arg) # macro
 EVHTTP_REQUEST = 0
+EVHTTP_REQ_POST = 1
+# def EVBUFFER_OUTPUT(x): return (x)->output # macro
+def evtimer_del(ev): return event_del(ev) # macro
 # def event_initialized(ev): return ((ev)->ev_flags & EVLIST_INIT) # macro
+def signal_add(ev,tv): return event_add(ev, tv) # macro
+EVCON_CONNECTED = 2
+EVCON_DISCONNECTED = 0
+EVHTTP_REQ_HEAD = 2
+# def EVENT_SIGNAL(ev): return (int)(ev)->ev_fd # macro
+def evtimer_pending(ev,tv): return event_pending(ev, EV_TIMEOUT, tv) # macro
 class event_base(Structure):
     pass
 event_base._fields_ = [
@@ -851,14 +851,14 @@ __all__ = ['EVLIST_INTERNAL', 'evhttp_write_buffer', 'evhttp_del_cb',
            'evhttp_connection_get_peer',
            'evhttp_connection_set_retries', 'evhttp_add_header',
            'EV_WRITE', 'event_get_method', 'evhttp_connection',
-           'EVHTTP_RESPONSE', 'event_dispatch',
+           'signal_pending', 'event_dispatch',
            'N14evhttp_request4DOT_27E',
            'evhttp_request_set_chunked_cb', 'EVCON_DISCONNECTED',
            'N5event4DOT_25E', 'u_char', 'EVCON_HTTP_EOF',
            'evbuffer_drain', 'EVLOOP_ONCE', 'evhttp_connection_error',
            'EVBUFFER_READ', '__time_t', 'event_base_priority_init',
            'EV_PERSIST', 'evhttp_encode_uri', 'event_list',
-           'evtimer_pending', 'EVCON_HTTP_INVALID_HEADER',
+           'evtimer_pending', 'EVUTIL_SOCKET_ERROR',
            'evhttp_decode_uri', 'event_base_free', 'event_pending',
            'evhttp_connection_set_base', 'evhttp_start_read',
            'EVLIST_ACTIVE', 'evhttp_send_reply_end',
@@ -894,15 +894,16 @@ __all__ = ['EVLIST_INTERNAL', 'evhttp_write_buffer', 'evhttp_del_cb',
            'N9evhttp_cb4DOT_29E', 'EVLIST_TIMEOUT', 'event_loop',
            'N19evhttp_bound_socket4DOT_30E', 'int64_t',
            'evhttp_parse_lines', 'evhttp_start', 'evtimer_del',
-           'evhttp', 'u_short', 'evhttp_cmd_type', 'signal_pending',
+           'evhttp', 'u_short', 'evhttp_cmd_type', 'EVHTTP_RESPONSE',
            'evbuffer_add', 'event_set', 'EVBUFFER_WRITE',
            'event_set_log_callback', 'EV_READ', 'EVLIST_SIGNAL',
            'timeval', '__u_short', 'evconq', 'evhttp_set_cb',
-           'EVBUFFER_ERROR', 'EVLIST_ALL', 'EVUTIL_SOCKET_ERROR',
-           'event_base', 'evhttp_new', 'EVHTTP_CON_OUTGOING',
-           'evbuffer_readline', 'evhttp_send_error',
-           'evhttp_connection_set_local_address', 'event_active',
-           'evhttp_connection_reset', 'evhttp_free', 'EVHTTP_REQ_GET',
-           'EVCON_CONNECTING', 'event_loopbreak', '__socklen_t',
-           'EVHTTP_REQ_POST', 'evhttp_make_request', 'signal_add',
-           'evhttp_cb', 'evbuffer_add_printf', 'EVHTTP_REQUEST']
+           'EVBUFFER_ERROR', 'EVLIST_ALL',
+           'EVCON_HTTP_INVALID_HEADER', 'event_base', 'evhttp_new',
+           'EVHTTP_CON_OUTGOING', 'evbuffer_readline',
+           'evhttp_send_error', 'evhttp_connection_set_local_address',
+           'event_active', 'evhttp_connection_reset', 'evhttp_free',
+           'EVHTTP_REQ_GET', 'EVCON_CONNECTING', 'event_loopbreak',
+           '__socklen_t', 'EVHTTP_REQ_POST', 'evhttp_make_request',
+           'signal_add', 'evhttp_cb', 'evbuffer_add_printf',
+           'EVHTTP_REQUEST']
