@@ -1,5 +1,10 @@
 """
-Based on Barry Pederson code.
+Based on Barry Pederson code. Requires py-amqplib package.
+
+To run consumer server:
+    evserver --exec="import evserver.examples.amqp; application=evserver.examples.amqp.wsgi_subscribe"
+To produce message:
+    python -c "import evserver.examples.amqp; evserver.examples.amqp.publish('Hello World')"
 """
 import sys
 import time
@@ -9,14 +14,11 @@ import amqplib.nbclient_0_8 as nbamqp
 
 def publish(msg_body):
     conn = blamqp.Connection('localhost', userid='guest', password='guest')
-
     ch = conn.channel()
     ch.access_request('/data', active=True, write=True)
-
     ch.exchange_declare('myfans', 'fanout', auto_delete=True)
 
-    msg = blamqp.Message(msg_body, content_type='text/plain', application_headers={'foo': 7, 'bar': 'baz'})
-
+    msg = blamqp.Message(msg_body, content_type='text/plain')
     ch.basic_publish(msg, 'myfans')
 
     ch.close()
