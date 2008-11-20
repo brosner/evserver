@@ -4,20 +4,20 @@ Based on Barry Pederson code.
 import sys
 import time
 
-import amqplib.client_0_8 as amqp
+import amqplib.client_0_8 as blamqp
 import amqplib.nbclient_0_8 as nbamqp
 
 def publish(msg_body):
-    conn = amqp.Connection('localhost', userid='guest', password='guest')
+    conn = blamqp.Connection('localhost', userid='guest', password='guest')
 
     ch = conn.channel()
     ch.access_request('/data', active=True, write=True)
 
-    ch.exchange_declare('myfan', 'fanout', auto_delete=True)
+    ch.exchange_declare('myfans', 'fanout', auto_delete=True)
 
-    msg = amqp.Message(msg_body, content_type='text/plain', application_headers={'foo': 7, 'bar': 'baz'})
+    msg = blamqp.Message(msg_body, content_type='text/plain', application_headers={'foo': 7, 'bar': 'baz'})
 
-    ch.basic_publish(msg, 'myfan')
+    ch.basic_publish(msg, 'myfans')
 
     ch.close()
     conn.close()
