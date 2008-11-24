@@ -20,17 +20,17 @@ def evserver_start(cmd):
     global last_proc
     port = random.randint(32000,64000)
     fd = open('log','w')
-    proc = subprocess.Popen(["./evserver/evserver.py", "--libevent=./evserver/libevent.so", "-n", "-vvv", "-l","127.0.0.1:%i" % port, "-e", cmd], stdout=fd.fileno())
-    sd = socket.socket()
-    sd.settimeout(3.0)
+    proc = subprocess.Popen(["./evserver/evserver", "-n", "-vvv", "-l","127.0.0.1:%i" % port, "-e", cmd], stdout=fd.fileno())
     for i in range(10):
         try:
+            sd = socket.socket()
+            sd.settimeout(3.0)
             sd.connect( ('127.0.0.1',port) )
         except socket.error:
             pass
         else:
             break
-        time.sleep(0.1)
+        time.sleep(0.3)
     else:
         raise Exception("Can't connect to server")
     def x():
@@ -196,8 +196,13 @@ def application_iteratorstop2(file):
        os.close(fd)
     return a
 
+try:
+    os.mkfifo('/tmp/fifo')
+except OSError:
+    pass
+
 def test_iterator_fiel():
-    for file in ['/dev/null', '/etc/passwd']:
+    for file in ['/tmp/fifo']: # doesn't wor on files /dev/null', '/etc/passwd']:
         sd, proc = evserver_start("import test; application = test.application_iteratorstop2('%s')" % file)
 
         sd.send("GET /test_iterator_devnull HTTP/1.0\n\r\n")

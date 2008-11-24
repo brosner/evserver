@@ -14,9 +14,9 @@ import os
 import logging
 import optparse
 import ctypes
-import dl
 import time
 import datetime
+import platform
 from pkg_resources import resource_filename
 
 
@@ -24,6 +24,15 @@ log = logging.getLogger(os.path.basename(__file__))
 
 FORMAT_FILE = '%(asctime)s %(name)s[%(process)d] %(levelname)10s %(message)s'
 FORMAT_CONS = '%(asctime)s %(name)-12s %(levelname)8s\t%(message)s'
+
+
+if platform.system() == 'Linux':
+    libeventbin = 'libevent.so'
+elif platform.system() == 'Darwin':
+    libeventbin = 'libevent.dylib'
+else:
+    raise NotImplemented('Unknown platform')
+
 
 def wsgi_django():
     import django.core.handlers.wsgi as django_wsgi
@@ -34,7 +43,13 @@ def wsgi_django():
 def clock_demo(environ, start_response):
     start_response("200 OK", [('Content-type','text/plain')])
     # whatever empty file, we just want to receive a timeout
-    fd = os.open('/dev/null', os.O_RDONLY)
+    fname = '/tmp/fifo'
+    try:
+        os.mkfifo(fname)
+    except OSError:
+        pass
+    fd = os.open(fname, os.O_RDONLY | os.O_NONBLOCK)
+    os.read(fd, 65535)
     try:
         while True:
             yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
@@ -80,6 +95,14 @@ FRAMEWORKS = {
 }
 
 
+def get_libevent_version(binary):
+    libevent = ctypes.CDLL(binary)
+    ver = libevent.event_get_version
+    ver.restype = ctypes.c_char_p
+    version = ver()[:]
+    libevent.close()
+    return version
+
 '''
 0. try users dir
 1. try current directory
@@ -92,26 +115,26 @@ def find_libevent_binary(userpath):
     def getpath(userpath):
         if userpath:
             if os.path.isdir(userpath):
-                return os.path.join(userpath, 'libevent.so')
+                return os.path.join(userpath, libeventbin)
             if os.path.isfile(userpath) or os.path.islink(userpath):
                 return os.path.realpath(os.path.expanduser(userpath))
-            raise Exception("%r is not a valid path to libevent.so" % (userpath,))
+            raise Exception("%r is not a valid path to %s" % (userpath,libeventbin))
 
-        if os.path.exists('./libevent.so'):
-            return './libevent.so'
+        if os.path.exists('./%s' % libeventbin):
+            return './%s' % libeventbin
 
-        if os.path.exists(resource_filename(__name__, 'libevent.so')):
-            return resource_filename(__name__, 'libevent.so')
+        if os.path.exists(resource_filename(__name__, libeventbin)):
+            return resource_filename(__name__, libeventbin)
 
         try:
-            a = ctypes.CDLL('libevent.so')
+            a = ctypes.CDLL(libeventbin)
             a.close()
-            return 'libevent.so'
+            return libeventbin
         except OSError:
             pass
 
-        if os.path.exists('/usr/local/lib/libevent.so'):
-            return '/usr/local/lib/libevent.so'
+        if os.path.exists('/usr/local/lib/%s' % libeventbin):
+            return '/usr/local/lib/%s' % libeventbin
 
         try:
             a = ctypes.CDLL('event')
@@ -120,18 +143,15 @@ def find_libevent_binary(userpath):
         except OSError:
             pass
 
-        return 'libevent.so'
+        return libeventbin
 
     so = getpath(userpath)
     try:
-        a = ctypes.CDLL(so)
-        ver = a.event_get_version
-        ver.restype = ctypes.c_char_p
-        a.close()
-        return so, ver()[:]
+        ver = get_libevent_version(so)
+        return so, ver
     except OSError:
-        raise Exception("**** 'libevent.so' not found or can't be loaded ****\n"+
-                        "                try setting the location using --libevent </path/to/the/libevent.so> flag\n" +
+        raise Exception("**** %r not found or can't be loaded ****\n" % (libeventbin)+
+                        "                try setting the location using --libevent </path/to/the/%s> flag\n" % (libeventbin)+
                         "                or use 'LD_LIBRARY_PATH=\"../pathtolibeventsobinaries\" %s ...'.\n" % (sys.argv[0]) +
                         "                you can also try to install libevent in current directory %r or /usr/local/lib" % (os.getcwd()))
 
@@ -161,7 +181,7 @@ def main(args):
                       help="chunk of python code that specifies wsgi entry point application(environ, start_response), used if no framework is specified")
     parser.add_option("", "--libevent",
                       action="store", dest="libeventbinary", default="",
-                      help="use libevent.so binary from specified path")
+                      help="use %s binary from specified path" % libeventbin)
     parser.add_option("-s", "--status",
                       action="store", dest="statusaddr", default="",
                       help="Bind server status page to specified host:port")
@@ -229,6 +249,7 @@ def main(args):
     log.info("Framework=%r, Main dir=%r, args=%r" % (options.framework, os.getcwd(), args))
     libeventbinary, libeventversion = find_libevent_binary(options.libeventbinary)
     ctypes.libeventbinary = libeventbinary
+    ctypes.libeventbinary_version = libeventversion
     import server
 
     log.info("libevent loaded from %r, ver %r" % (libeventbinary, libeventversion,))

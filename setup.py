@@ -15,6 +15,10 @@ try:
 except Exception:
     pass
 
+import evserver.main
+lev = evserver.main.get_libevent_version('evserver/%s' % evserver.main.libeventbin).replace('-','_').replace('.','_')
+if lev:
+    version += '_libevent_%s' % lev
 
 class MyDist(Distribution):
      def has_ext_modules(self):

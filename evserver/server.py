@@ -6,8 +6,9 @@ import sys
 import signal
 import utils
 try:
-    import ctypes_event as libevent
-except AttributeError:
+    v = ctypes.libeventbinary_version.replace('-','_').replace('.','_')
+    libevent = __import__('ctypes_event_%s' % v)
+except (AttributeError, ImportError):
     raise Exception("**** libevent ctypes bindings 'ctypes_event.py' are broken - probably wrong version of binary ****\n"+
                     "                currently, libevent.so is loaded from %r \n" %(ctypes.libeventbinary,)+
                     "                try to specify different 'libevent.so' using '--libevent </path/to/libevent.so> \n"+
@@ -260,11 +261,12 @@ def libevent_set_signal_handler(signo, handler):
 vhosts = []
 
 def main_loop( bindings ):
-    libevent.event_init()
+    base = libevent.event_init()
     # handle CTRL+C
     libevent_set_signal_handler(signal.SIGINT, signal_handler)
     libevent_set_signal_handler(signal.SIGHUP, hup_handler)
 
+    https = []
     for (host, port, application) in bindings:
         log.info("Binding to %s:%i" % (host,port))
         http = libevent.evhttp_start(host, port)
@@ -284,6 +286,7 @@ def main_loop( bindings ):
         }
         libevent.evhttp_set_gencb(http, new_request_callback_ptr, utils.set_userdata(vhostdata));
         vhosts.append(vhostdata)
+        https.append(http)
 
 
     # The main libevent loop... Forever.
@@ -291,7 +294,10 @@ def main_loop( bindings ):
 
     # end loop - id est Ctrl+c
     log.info("Quitting")
-    libevent.evhttp_free(http)
+    for http in https:
+        libevent.evhttp_free(http)
+    libevent.event_base_free(base)
+
     gc.collect()
     utils.clear_ref()
 
