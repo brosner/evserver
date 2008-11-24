@@ -21,10 +21,13 @@ egg: eggs
 eggs: fullclean libeventdll
 	$(PYTHON) setup.py bdist_egg
 
-all:	fullclean bindings eggs
+all:	clean bindings eggs
+distclean: fullclean
 mrproper: fullclean
 fullclean: clean
+	@echo "[*] removing _all_ automatically generated files"
 	rm -f evserver/libevent.so evserver/libevent.dylib
+	rm -f evserver/ctypes_event_*.py
 clean:
 	find . -name "*.pyc" | xargs rm -f
 	find . -name "*.pyo" | xargs rm -f
@@ -79,7 +82,6 @@ bindings: libeventdll
 	echo "You should run: LIBEVENTSOURCES=../my/path/to/compiled/libevent make"; \
 	exit 1 ;\
 	fi
-
 
 	# testing dependencies
 	@gccxml --version
@@ -137,8 +139,8 @@ libeventdll:
 	echo "You should run: LIBEVENTSOURCES=../my/path/to/compiled/libevent make"; \
 	exit 1 ;\
 	fi
+	rm -f evserver/libevent.so evserver/libevent.dylib
 	cp $(LIBEVENTPRELOAD) evserver/$(LIBEVENTDLL)
-
 
 test:
 	PYTHONPATH="." $(PYTHON) test.py

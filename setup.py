@@ -32,7 +32,7 @@ setup(
     author = "Marek Majkowski",
     url = "http://code.google.com/p/evserver/wiki/Documentation",
     license = "BSD",
-    package_data = {'': ['*.so']},
+    package_data = {'': ['*.so', '*dylib']},
     packages = ['evserver', 'evserver.management', 'evserver.management.commands'],
     package_dir = {'':"."},
 
