@@ -32,8 +32,8 @@ setup(
     author = "Marek Majkowski",
     url = "http://code.google.com/p/evserver/wiki/Documentation",
     license = "BSD",
-    package_data = {'': ['*.so', '*dylib']},
-    packages = ['evserver', 'evserver.management', 'evserver.management.commands'],
+    package_data = {'': ['*.so', '*dylib', '*.dll', '*.js', '*.html']},
+    packages = find_packages(),
     package_dir = {'':"."},
 
     entry_points = {

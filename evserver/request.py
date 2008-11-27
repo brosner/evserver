@@ -131,7 +131,7 @@ class Request:
         self.iterable = iterable
         return self.out_dict, True, self.iterable_wrapper()
 
-    def continue_wsgi_application(self, evt):
+    def continue_wsgi_application(self, timeout):
         assert(self.iterable)
         assert(self.suspended)
         assert(not self.event_key)
@@ -140,7 +140,7 @@ class Request:
         if self.timeout:
             self.timeout.pop()
             assert(not self.timeout)
-        if (evt & libevent.EV_TIMEOUT):
+        if timeout:
             self.timeout.append(True)
 
         return self.out_dict, True, self.iterable_wrapper()

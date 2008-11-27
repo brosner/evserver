@@ -13,7 +13,7 @@ import sys
 import os
 import logging
 import optparse
-import ctypes
+import ctypes, ctypes.util
 import time
 import datetime
 import platform
@@ -137,9 +137,10 @@ def find_libevent_binary(userpath):
             return '/usr/local/lib/%s' % libeventbin
 
         try:
-            a = ctypes.CDLL('event')
+            so = ctypes.util.find_library('event')
+            a = ctypes.CDLL(so)
             a.close()
-            return 'event'
+            return so
         except OSError:
             pass
 
@@ -188,6 +189,9 @@ def main(args):
     parser.add_option("-p", "--psyco",
                       action="store_true", dest="psyco",
                       help="Try to enable Psyco just-in-time compiler.")
+    parser.add_option("-r", "--reload",
+                      action="count", dest="reload",
+                      help="Enable automatic code reloader, useful for development. Use this option twice to die on code update.")
 
     (options, left_args) = parser.parse_args(args=args)
 
@@ -253,10 +257,17 @@ def main(args):
     import server
 
     log.info("libevent loaded from %r, ver %r" % (libeventbinary, libeventversion,))
+    server.main_init()
 
     if not options.nodebug:
         if options.verbosity:
             log.warning("ommiting -v options, because debugging is turned on")
+
+    if options.reload:
+        die = False if options.reload != 2 else True
+        log.warning("Starting automatic code reloading. Die on change = %r" % (die, ))
+        import reloader
+        reloader.Reloader(die=die)
 
     if not options.statusaddr:
         server.main_loop( [(host, port, application),] )

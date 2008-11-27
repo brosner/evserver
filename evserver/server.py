@@ -124,7 +124,7 @@ def root_handler(evreq, req, event_type, evt=None):
             del buf
 
     if event_type == REQUEST_CONTINUE:
-        response_dict, chunked, iterable = req.continue_wsgi_application(evt)
+        response_dict, chunked, iterable = req.continue_wsgi_application(True if evt and (evt & libevent.EV_TIMEOUT) else False)
         assert(chunked)
 
     # body.
@@ -259,12 +259,17 @@ def libevent_set_signal_handler(signo, handler):
     libevent.signal_add(event_ref, None)
 
 vhosts = []
+base = None
 
-def main_loop( bindings ):
+def main_init():
+    global base
     base = libevent.event_init()
     # handle CTRL+C
     libevent_set_signal_handler(signal.SIGINT, signal_handler)
     libevent_set_signal_handler(signal.SIGHUP, hup_handler)
+
+def main_loop( bindings ):
+    global base
 
     https = []
     for (host, port, application) in bindings:
