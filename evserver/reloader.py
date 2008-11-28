@@ -4,6 +4,7 @@
 import sys
 import time
 import stat
+import imp
 import ctypes
 
 import os, os.path, logging
@@ -44,7 +45,7 @@ class FamPyinotify:
     onchange = None
 
     def __init__(self, onchange):
-        log.debug('starting FamPyinotify')
+        log.debug('Starting file alteration monitor: FamPyinotify')
         self.filenames = {}
 
         class PTmp(ProcessEvent):
@@ -86,7 +87,7 @@ class FamPolling:
     fd = None
 
     def __init__(self, onchange):
-        log.debug('starting FamPolling')
+        log.debug('Starting file alteration monitor: FamPolling (files checked once a second)')
         self.filenames = {}
         self.onchange = onchange
         fname = '/tmp/fifo'
@@ -142,7 +143,7 @@ class Reloader:
             libevent.event_loopexit(None)
         else:
             for fname, module in self.toreload.items():
-                log.debug("Reloading file %r, module %r" % (fname, module))
+                log.warning("Reloading file %r, module %r" % (fname, module))
                 reload(module)
 
             fd, timeout = self.get_fd_timeout()
@@ -157,6 +158,7 @@ class Reloader:
         def add_file(pyc_file, module):
             fname = pyc_file.rpartition('.')[0] + '.py'
             if fname not in cache and os.access(fname, os.W_OK):
+                log.warning("watching file %r" % (fname))
                 self.fam.add_file(fname)
             cache[fname] = module
 
@@ -173,12 +175,13 @@ class Reloader:
 
         # add modules currently loaded
         fill_cache()
-        # add modules loaded in the future
-        def importhook(pyc_file):
-            add_file(pyc_file, None)
-            raise ImportError
-        self.importhook = importhook
-        sys.path_hooks.insert(0, self.importhook)
+
+        class ImportHook:
+            def find_module(self, a, p=None):
+                fd, fname, _ = imp.find_module(a,p)
+                fd.close()
+                add_file(fname, None)
+        sys.meta_path.insert(0, ImportHook() )
         return
 
     def get_fd_timeout(self):

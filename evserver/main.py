@@ -191,7 +191,7 @@ def main(args):
                       help="Try to enable Psyco just-in-time compiler.")
     parser.add_option("-r", "--reload",
                       action="count", dest="reload",
-                      help="Enable automatic code reloader, useful for development. Use this option twice to die on code update.")
+                      help="Enable automatic code reloader, useful for development. Use this option twice to force the application to die when code changes.")
 
     (options, left_args) = parser.parse_args(args=args)
 

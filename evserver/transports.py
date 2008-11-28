@@ -8,7 +8,10 @@ class Transport():
     callback = 'c'
     domain   = None
     initial_data = ''
-    headers  = {'Cache-Control': 'no-cache'}
+    headers  = {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'text/plain',
+    }
     name = ''
 
     def __init__(self, name, callback=None, domain=None):
@@ -18,9 +21,6 @@ class Transport():
 
     def get_initial_data(self):
         return self.initial_data
-
-    def encode(self, data):
-        return data
 
     def start(self):
         ## must be some message here, at least one byte long...
