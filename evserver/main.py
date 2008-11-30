@@ -59,34 +59,6 @@ def clock_demo(environ, start_response):
     os.close(fd)
     return
 
-'''
-# returning iterators doesn't work for turbogears and pylons, sorry
-def wsgi_cherry_py():
-    import pkg_resources
-    import cherrypy
-    import sys
-
-    pkg_resources.require("TurboGears")
-
-    from cherrypy._cpwsgi       import wsgiApp
-
-    #if os.path.exists(os.path.join(os.getcwd(), "setup.py")):
-    #    print 1
-    #    cherrypy.config.update(file="dev.cfg")
-    #else:
-    cherrypy.config.update(file="prod.cfg")
-
-    from tgproject.controllers import Root
-
-    cherrypy.root = Root()
-
-    cherrypy.server.start(initOnly=True, serverClass=None)
-    return wsgiApp
-
-def wsgi_pylons():
-    from paste.deploy import loadapp
-    return loadapp('config:%s' % (os.path.join(os.getcwd(), 'development.ini')))
-'''
 
 # after called, should return valid ``wsg_application(environ, start_response)`` function
 FRAMEWORKS = {

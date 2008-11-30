@@ -335,7 +335,7 @@ class Request:
         headers['wsgi.input'] = input_stream
         headers['wsgi.errors'] = sys.stderr # TODO: this should be a log object
         headers['wsgi.multithread'] = False
-        headers['wsgi.multiprocess'] = False
+        headers['wsgi.multiprocess'] = True
         headers['wsgi.run_once'] = False
         headers['wsgi.now'] = lambda: server.now
 

@@ -3,58 +3,54 @@ import json
 import os, os.path, logging
 log = logging.getLogger(os.path.basename(__file__))
 import sys
+import uuid
+import re
 
 class Transport():
     callback = 'c'
     domain   = None
-    initial_data = ''
     headers  = {
         'Cache-Control': 'no-cache',
         'Content-Type': 'text/plain',
     }
-    name = ''
+    name = None
 
-    def __init__(self, name, callback=None, domain=None):
+    def __init__(self, name, callback='c', domain=''):
         self.name = name
-        self.callback = callback
-        self.domain = domain
-
-    def get_initial_data(self):
-        return self.initial_data
+        self.callback = ''.join(re.findall('[a-z0-9_]+', callback))
+        self.domain = ''.join(re.findall('[a-z0-9._-]+', domain))
 
     def start(self):
-        ## must be some message here, at least one byte long...
-        return ' ', 'application/xml; charset=utf-8'
+        return ''
 
     def write(self, data):
-        return '''%s\r\n''' % data
+        return '''%s\r\n''' % (data)
+
+    def get_headers(self):
+        return self.headers.items()
 
 class BasicTransport(Transport):
-
     def __init__(self, *args, **kwargs):
         self.headers['Content-Type'] = 'text/html'
         Transport.__init__(self, *args, **kwargs)
 
-    initial_data = '''
-        <html>
-        <head>
-        </head>
-        <body onload="setTimeout('window.location.reload()', 2000);">
-    '''
+    def start(self):
+        return '''<html><head></head><body onload="setTimeout('window.location.reload()', 2000);">\n'''
 
-    def encode(self, data):
-        return '<b>%s</b><br>\r\n' % (json.write(data),)
+    def write(self, data):
+        return '<b>%s</b><br />\r\n' % (data,)
 
 class IFrameTransport(Transport):
 
     def __init__(self, *args, **kwargs):
-        self.headers['Content-Type'] = 'text/html'
+        self.headers['Content-Type'] = 'text/html; charset=utf-8'
         Transport.__init__(self, *args, **kwargs)
 
     initial_data = '''
         <html>
         <head>
-          <script type="text/javascript" charset="utf-8">
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+            <script type="text/javascript" charset="utf-8">
             function extract_xss_domain(old_domain) {
                 domain_pieces = old_domain.split('.');
                 if (domain_pieces.length === 4) {
@@ -66,51 +62,35 @@ class IFrameTransport(Transport):
                 return domain_pieces.slice(-2).join('.');
             }
 
-            document.domain = extract_xss_domain(document.domain);
+            //document.domain = extract_xss_domain(document.domain);
           </script>
         </head>
         <body onLoad="try{parent.%(callback)s_reconnect();}catch(e){alert(e.message);}">
-    ''' + ('<span></span>' * 100)
-
-    def get_initial_data(self):
-        return self.initial_data % {'callback':self.callback, 'domain':self.domain}
-
-    def encode(self, data):
-        return '''<script>try{parent.%(callback)s(%(data)s);}catch(e){alert(e.message);}</script>''' % \
-                    {'callback':self.callback, 'data':json.write(data)}
+    ''' + ('<span></span>' * 80)
 
     def start(self):
-        fill = '<span></span>'*80  + '\r\n\r\n' # fill for safari, 1024 bytes of padding
-        if self.name == 'htmlfile':
-            domain = '''<script>try{document.domain='%s';}catch(e){alert('Setting document.domain failed.');}</script>\n''' % self.domain
-        else:
-            domain = ''
-        data     = '''<html><body onLoad="try{parent.%s_reconnect(true);}catch(e){};">%s\n%s\n''' % \
-                      (self.callback, self.domain, fill)
-        return data, 'text/html; charset=utf-8'
+        return self.initial_data % {'callback':self.callback, 'domain':self.domain }
 
     def write(self, data):
-        return '''<script>try{parent.%s(%s);}catch(e){alert('c ' + document.domain);}</script>\r\n''' % \
+        return '''<script>try{parent.%s(%s);}catch(e){alert(e.message);}</script>\r\n''' % \
                         (self.callback, json.write(data))
 
 
 class SSETransport(Transport):
 
     def __init__(self, *args, **kwargs):
-        self.headers['Reconnection-Time'] = '5000'
-        self.headers['Content-Type'] = 'application/x-dom-event-stream'
+        self.headers['Reconnection-Time'] = '2000'
+        self.headers['Content-Type'] = 'application/x-dom-event-stream; charset=UTF-8'
+        self.headers['Cache-Control'] =  'no-cache, must-revalidate'
         Transport.__init__(self, *args, **kwargs)
 
     def start(self):
-        data     = 'Event: sessionid\ndata: p4sq1n8b$EGcGnKpwW7yNw\n\n\r\n'
-        return data, 'application/x-dom-event-stream'
+        return 'Event: sessionid\ndata: %s\n\n\r\n' % (str(uuid.uuid4()).replace('-','')[:22],)
 
     def write(self, data):
-        return '''Event: comet\ndata: %s\n\n''' % data
-
-    def encode(self, data):
+        data = json.write(data)
         return (
-            'Event: orbited\n' +
+            'Event: payload\n' +
             '\n'.join(['data: %s' % line for line in data.splitlines()]) +
             '\n\n'
         )
@@ -119,12 +99,16 @@ class XHRStreamTransport(Transport):
     boundary = '\r\n|O|\r\n'
 
     def __init__(self, *args, **kwargs):
-        self.headers['Content-Type'] = 'application/x-orbited-event-stream'
+        self.headers['Content-Type'] = 'application/x-orbited-event-stream; charset=utf-8'
+
         Transport.__init__(self, *args, **kwargs)
 
     initial_data = '.'*256 + '\r\n\r\n'
 
-    def encode(self, data):
+    def start(self):
+        return self.initial_data
+
+    def write(self, data):
         return data + self.boundary
 
         # if transport == 'xhr':

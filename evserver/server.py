@@ -177,7 +177,6 @@ def root_handler(evreq, req, event_type, evt=None):
 
     # before closing
     req.update_cpu_time()
-
     # tail.
     if event_type == REQUEST_CLOSE or (chunked and req.is_closed()):
         if evreq.contents.evcon and evreq.contents.evcon.contents and evreq.contents.evcon.contents.closecb:

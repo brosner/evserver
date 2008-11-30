@@ -1,0 +1,276 @@
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+    <script src="/static/prototype.js" type="text/javascript"></script>
+    <script src="/static/utils.js" type="text/javascript"></script>
+
+    <script src="/static/comet_utils.js" type="text/javascript"></script>
+    <script src="/static/comet.js" type="text/javascript"></script>
+
+
+    <style type="text/css">
+        .box    {color:black;
+                width:650px;
+                height:275px;
+                overflow:scroll;
+                font-size:inherit;
+                border: 1px solid black;
+                background-color:#E9E9E9;
+                margin:0; padding:0;
+                }
+    </style>
+</head>
+<html>
+    <h2>Comet test suite</h2><br />
+    <p width=200px>
+        This test checks which one is the best methods of sending realtime events to your specific browser.
+        It doesn't check if <i>comet</i> is visible on your browser. You can see rotating hourglass, rotating wheel
+        or active stop button on your browser. I can't test that.
+    </p>
+    <h3>Current domain tests</h3>
+    <table border=1>
+        <tr><td></td>
+            <td>iframe</td>
+            <td>xhrstream</td>
+            <td>sse</td>
+            <td>long polling</td>
+        <tr><td>Connection</td>
+            <td id=n-con-iframe>?</td>
+            <td id=n-con-xhrstream>?</td>
+            <td id=n-con-sse>?</td>
+            <td id=n-con-longpoll>?</td>
+        <tr><td>Special chars</td>
+            <td id=n-spe-iframe>?</td>
+            <td id=n-spe-xhrstream>?</td>
+            <td id=n-spe-sse>?</td>
+            <td id=n-spe-longpoll>?</td>
+        <tr><td>Padding</td>
+            <td id=n-pa1-iframe>?</td>
+            <td id=n-pa1-xhrstream>?</td>
+            <td id=n-pa1-sse>?</td>
+            <td id=n-pa1-longpoll>?</td>
+        <tr><td>Utf encoding</td>
+            <td id=n-utf-iframe>?</td>
+            <td id=n-utf-xhrstream>?</td>
+            <td id=n-utf-sse>?</td>
+            <td id=n-utf-longpoll>?</td>
+        <tr><td>Big transfer</td>
+            <td id=n-big-iframe>?</td>
+            <td id=n-big-xhrstream>?</td>
+            <td id=n-big-sse>?</td>
+            <td id=n-big-longpoll>?</td>
+        <tr><td>Padding</td>
+            <td id=n-pa2-iframe>?</td>
+            <td id=n-pa2-xhrstream>?</td>
+            <td id=n-pa2-sse>?</td>
+            <td id=n-pa2-longpoll>?</td>
+        <tr><td>Reconnect timeout</td>
+            <td id=n-rec-iframe>?</td>
+            <td id=n-rec-xhrstream>?</td>
+            <td id=n-rec-sse>?</td>
+            <td id=n-rec-longpoll>?</td>
+        <tr><td>Active close</td>
+            <td id=n-clo-iframe>ok</td>
+            <td id=n-clo-xhrstream>ok</td>
+            <td id=n-clo-sse>ok</td>
+            <td id=n-clo-longpoll>ok</td>
+        <tr><td>Sending data</td>
+            <td id=n-snd-iframe>?</td>
+            <td id=n-snd-xhrstream>?</td>
+            <td id=n-snd-sse>?</td>
+            <td id=n-snd-longpoll>?</td>
+        <tr><td>Round-trip time</td>
+            <td id=n-rtt-iframe>?</td>
+            <td id=n-rtt-xhrstream>?</td>
+            <td id=n-rtt-sse>?</td>
+            <td id=n-rtt-longpoll>?</td>
+        <tr><td>Multiple channels</td>
+            <td id=n-mul-iframe>?</td>
+            <td id=n-mul-xhrstream>?</td>
+            <td id=n-mul-sse>?</td>
+            <td id=n-mul-longpoll>?</td>
+    </table>
+    <br />
+    <pre id="logger" class="box"></pre>
+<script>
+<!--
+    var logger = document.getElementById('logger');
+    logger.v = ''
+
+    function log(message){
+        logger.v = logger.v + '\n' + message.substr(0,128);
+        logger.innerHTML = replaceExtChars(logger.v);
+        logger.scrollTop = logger.scrollHeight;
+    }
+
+    function set_result(transport, t, result){
+        if(result == true)
+            document.getElementById('n-' + t +'-'+transport).innerHTML= '<i>OK!</i>';
+        else if(result == false)
+            document.getElementById('n-' + t +'-'+transport).innerHTML= '<b>FAILED</b>';
+        else
+            document.getElementById('n-' + t +'-'+transport).innerHTML= result;
+    }
+
+    var tested_transports = ['iframe', 'xhrstream','sse'];
+
+    function stage_1(){
+        var transportclose = {};
+        for(var i = 0; i < tested_transports.length; i++) {
+            var gtransport = tested_transports[i];
+            function get_callback(){
+                var transport = gtransport;
+                var stage = 0;
+                var last_message_time = 0;
+                var timeoutId = null;
+                return function (data){
+                    switch(stage){
+                    case 0:
+                        set_result(transport, 'con',  data == 'connected!');
+                        break;
+                    case 1:
+                        var s = ''
+                        for(var i = 0; i < 128; i++)
+                            s += String.fromCharCode(i)
+                        set_result(transport, 'spe', data == s);
+                        break;
+                    case 2:
+                        set_result(transport, 'pa1',  data == 'padding1');
+                        break;
+                    case 3:
+                        var s = 'На берегу пустынных волн ich sih in grâwen tägelîch als er wil tagen, He wes Leovenaðes sone -- liðe him be Drihten. ἀπὸ τὸ Ἄξιον ἐστί ვეპხის ტყაოსანი შოთა რუსთაველი   Μπορώ να φάω σπασμένα γυαλιά χωρίς να πάθω τίποτα.  ⠊⠀⠉⠁⠝⠀⠑⠁⠞⠀⠛⠇⠁⠎⠎⠀⠁⠝⠙⠀⠊⠞⠀⠙⠕⠑⠎⠝⠞⠀⠓⠥⠗⠞⠀⠍⠑  私はガラスを食べられます。それは私を傷つけません。';
+                        set_result(transport, 'utf', data == s);
+                        if(data != s){
+                            log(transport + ' data: ' + data);
+                            log(transport + ' s:    ' + s);
+                        }
+                        break;
+                    case 4:
+                        var a = data.split(' ', 2);
+                        var size = Number(a[0]);
+                        var data = a[1];
+                        set_result(transport, 'big', size == data.length);
+                        break;
+                    case 5:
+                        set_result(transport, 'pa2',  data == 'padding2');
+                        last_message_time = (new Date()).getTime()/1000.0;
+                        break;
+                    case 6:
+                        delta = (new Date()).getTime()/1000.0 - last_message_time;
+                        if(data == 'connected!')
+                            set_result(transport, 'rec',  delta.toFixed(3) + 's');
+                        else{
+                            set_result(transport, 'rec',  false);
+                            log(transport + ' : ' + data);
+                        }
+                        // active close
+                        transportclose[transport]();
+                        timeoutId = window.setTimeout(function (){stage_2(transport);}, 3000);
+                        break;
+                    case 6:
+                        // never reached
+                        window.clearTimeout(timeoutId);
+                        set_result(transport, 'clo',  false);
+                        break;
+                    }
+                    stage += 1;
+                }
+            }
+            transportclose[gtransport] = comet_connection('/comet', get_callback(), gtransport);
+        }
+    } // stage_1
+
+    function stage_2(transport){
+        var transportclose = {};
+        log('asd');
+        var stage = 0;
+        var uid = '';
+        var uid2 = '';
+        var m1 = '';
+        var m2 = '';
+        var t0 = 0;
+        var s = 'ms';
+        function callback(data){
+            switch(stage){
+            case 0:
+                set_result(transport, 'snd',  data == 'connected!');
+                break;
+            case 1:
+                uid = data;
+                t0 = (new Date()).getTime();
+                new Ajax.Request('/echowrite?uid=' + escape(uid), {
+                    method:'post',
+                    postBody:'TEST' + (stage+1)
+                });
+                break;
+            case 2:
+            case 3:
+            case 4:
+                if(data != ('TEST' + stage) ){
+                    log(transport +': rtt'+stage + ' is: ' + data);
+                    log(transport +': rtt'+stage + ' be: ' + 'TEST'+stage);
+                    set_result(transport, 'rtt',  false);
+                }else{
+                    t1 = (new Date()).getTime();
+                    delta = t1-t0;
+                    s = ' ' + delta + s;
+                    set_result(transport, 'rtt',  s);
+                    t0 = t1;
+                    new Ajax.Request('/echowrite?uid=' + escape(uid), {
+                        method:'post',
+                        postBody:'TEST' + (stage+1)
+                    });
+                }
+                break;
+            case 5:
+                transportclose[transport+'2'] = comet_connection('/echoread', callback, transport);
+                break;
+            case 6:
+                if(data != 'connected!'){
+                    log(transport +': mul is: ' + data);
+                    log(transport +': mul be: ' + 'connected!');
+                    set_result(transport, 'mul',  false);
+                    transportclose[transport]();
+                    transportclose[transport+'2']();
+                }
+                break;
+            case 7:
+                uid2 = data;
+                m1 = '' + Math.random();
+                m2 = '' + Math.random();
+                new Ajax.Request('/echowrite?uid=' + escape(uid), {
+                    method:'post',
+                    postBody:m1
+                });
+                new Ajax.Request('/echowrite?uid=' + escape(uid2), {
+                    method:'post',
+                    postBody:m2
+                });
+                break;
+            case 8:
+            case 9:
+                if(data == m1){
+                    m1 = 'OK';
+                }else if(data == m2){
+                    m2 = 'OK';
+                }else{
+                    log(transport +': mul is: ' + data);
+                    log(transport +': mul be: ' + m1 + ' or ' + m2);
+                    set_result(transport, 'mul',  false);
+                    transportclose[transport]();
+                    transportclose[transport+'2']();
+                }
+                if(m1 == 'OK'  && m2 == 'OK'){
+                    set_result(transport, 'mul',  true);
+                }
+                break;
+           }
+           stage += 1;
+        }
+        transportclose[transport] = comet_connection('/echoread', callback, transport);
+    }
+
+    stage_1();
+-->
+</script>
+</html>

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import string
 import types
 
@@ -124,8 +123,7 @@ class JsonReader(object):
 
     def _readString(self):
         result = ""
-        ch = self._next()
-        assert ch == '"'
+        assert self._next() == '"'
         try:
             while self._peek() != '"':
                 ch = self._next()
@@ -148,8 +146,7 @@ class JsonReader(object):
                 result = result + ch
         except StopIteration:
             raise ReadException, "Not a valid JSON string: '%s'" % self._generator.all()
-        ch = self._next()
-        assert ch == '"'
+        assert self._next() == '"'
         return result
 
     def _hexDigitToInt(self, ch):
@@ -163,8 +160,7 @@ class JsonReader(object):
         return result
 
     def _readComment(self):
-        ch = self._next()
-        assert ch == "/"
+        assert self._next() == "/"
         second = self._next()
         if second == "/":
             self._readDoubleSolidusComment()
@@ -195,8 +191,7 @@ class JsonReader(object):
 
     def _readArray(self):
         result = []
-        ch = self._next()
-        assert ch == '['
+        assert self._next() == '['
         done = self._peek() == ']'
         while not done:
             item = self._read()
@@ -207,14 +202,12 @@ class JsonReader(object):
                 ch = self._next()
                 if ch != ",":
                     raise ReadException, "Not a valid JSON array: '%s' due to: '%s'" % (self._generator.all(), ch)
-        ch = self._next()
-        assert ch == ']'
+        assert ']' == self._next()
         return result
 
     def _readObject(self):
         result = {}
-        ch = self._next()
-        assert ch == '{'
+        assert self._next() == '{'
         done = self._peek() == '}'
         while not done:
             key = self._read()
@@ -233,8 +226,7 @@ class JsonReader(object):
                 ch = self._next()
                 if ch != ",":
                     raise ReadException, "Not a valid JSON array: '%s' due to: '%s'" % (self._generator.all(), ch)
-        ch = self._next()
-        assert ch == "}"
+	assert self._next() == "}"
         return result
 
     def _eatWhitespace(self):
@@ -309,7 +301,7 @@ class JsonWriter(object):
         elif obj is None:
             self._append("null")
         else:
-            raise WriteException, "Cannot write in JSON: %s type %s" % (repr(obj), type(obj))
+            raise WriteException, "Cannot write in JSON: %s" % repr(obj)
 
 def write(obj, escaped_forward_slash=False):
     return JsonWriter().write(obj, escaped_forward_slash)

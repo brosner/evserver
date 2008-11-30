@@ -1,0 +1,56 @@
+<html>
+<head>
+    <script type="text/javascript" src="/_/comet.js"></script> 
+    
+    <script type="text/javascript" charset="utf-8">
+    document.domain = extract_xss_domain(document.domain);
+    </script>
+</head>
+<body>
+    <script type="text/javascript" charset="utf-8">
+        callback = getURLParam('callback');
+        function x(){
+            var xhr = create_xhr();
+            var user_callback = parent[callback];
+            var post_data     = parent[callback + '_post_data'];
+            var ajax_method   = parent[callback + '_method'];
+            var ajax_uri      = parent[callback + '_ajax_uri'];
+            xhr.onreadystatechange = function (){
+                if(xhr.readyState != 4)
+                    return;
+                if(user_callback){
+                    /* avoid passing xhr object directly to parent iframe */
+                    var x = {};
+                    x.readyState    = xhr.readyState;
+                    x.responseText  = xhr.responseText;
+                    x.responseBody  = xhr.responseBody;
+                    x.status        = xhr.status;
+                    x.statusText    = xhr.statusText;
+                    user_callback(x);
+                }
+            };
+            xhr.open(ajax_method, ajax_uri, true);
+            xhr.send(post_data);
+            
+            function gc2(){
+                if(xhr){
+                    xhr.onreadystatechange=function () {};
+                    xhr.abort();
+                    delete(xhr);
+                    xhr = null;
+                }
+            }
+            if(window.addEventListener){
+                window.addEventListener('on'+'unload', gc2, false);
+                document.addEventListener('on'+'unload', gc2, false);
+            } else { // IE
+                window.attachEvent('on'+'unload', gc2);
+                document.attachEvent('on'+'unload', gc2);
+            }
+            document.comet_garbage = gc2;
+            window.comet_garbage   = gc2;
+        }
+        x();
+    </script>
+</body>
+</html>

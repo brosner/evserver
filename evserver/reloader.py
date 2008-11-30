@@ -128,6 +128,9 @@ else:
 
 
 
+
+import __builtin__
+
 class Reloader:
     def __init__(self, die=False):
         self.die = die
@@ -162,33 +165,31 @@ class Reloader:
                 self.fam.add_file(fname)
             cache[fname] = module
 
-        def fill_cache():
-            for fname, module in [(m.__file__, m) for k, m in sys.modules.items() if m and getattr(m, '__file__', None)]:
-                add_file(fname, module)
-
         def onchange(fname):
-            if not cache[fname]:
-                fill_cache() # Sorry! linear complexity here!
             self.toreload[fname] = cache[fname]
 
         self.fam = FamDefault(onchange)
 
-        # add modules currently loaded
-        fill_cache()
+        # fill cache
+        for fname, module in [(m.__file__, m) for k, m in sys.modules.items() if m and getattr(m, '__file__', None)]:
+            add_file(fname, module)
 
-        class ImportHook:
-            def find_module(self, a, p=None):
-                fd, fname, _ = imp.find_module(a,p)
-                fd.close()
-                add_file(fname, None)
-        sys.meta_path.insert(0, ImportHook() )
+
+        # sorry about that, but I haven't found any better working solution
+        self.orginal_import = __builtin__.__import__
+        def new_import(*args,**kwargs):
+            mod = self.orginal_import(*args, **kwargs)
+            if mod and getattr(mod, '__file__', None):
+                add_file(mod.__file__, mod)
+            return mod
+        __builtin__.__import__ = new_import
         return
 
     def get_fd_timeout(self):
         return (self.fam.get_fd(), self.fam.get_timeout())
 
     def stop(self):
-        sys.path_hooks.remove(self.importhook)
+        __builtin__.__import__ = self.orginal_import
         self.fam.close()
 
 
