@@ -89,6 +89,16 @@ class Request:
             self.out_dict = copy.deepcopy(self.standard_out_dict) # ignore their headers
             return self.out_dict, True, ['Internal Server Error']
 
+        if isinstance(iterable, str):
+            log.warning('got str instead of a list from wsgi application')
+            iterable = [iterable]
+            iterable_len = 1
+
+        if isinstance(iterable, unicode):
+            log.warning('got unicode instead of a list from wsgi application')
+            iterable = [iterable.encode()]
+            iterable_len = 1
+
         if iterable is None:
             iterable = []
             iterable_len = 0

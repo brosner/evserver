@@ -64,6 +64,31 @@
             <td id=n-pa2-xhrstream>?</td>
             <td id=n-pa2-sse>?</td>
             <td id=n-pa2-longpoll>?</td>
+        <tr><td>Whitespace</td>
+            <td id=n-whi-iframe>?</td>
+            <td id=n-whi-xhrstream>?</td>
+            <td id=n-whi-sse>?</td>
+            <td id=n-whi-longpoll>?</td>
+        <tr><td>Padding</td>
+            <td id=n-pa3-iframe>?</td>
+            <td id=n-pa3-xhrstream>?</td>
+            <td id=n-pa3-sse>?</td>
+            <td id=n-pa3-longpoll>?</td>
+        <tr><td>Buffered events</td>
+            <td id=n-buf-iframe>?</td>
+            <td id=n-buf-xhrstream>?</td>
+            <td id=n-buf-sse>?</td>
+            <td id=n-buf-longpoll>?</td>
+        <tr><td>Padding</td>
+            <td id=n-pa4-iframe>?</td>
+            <td id=n-pa4-xhrstream>?</td>
+            <td id=n-pa4-sse>?</td>
+            <td id=n-pa4-longpoll>?</td>
+        <tr><td>Keepalives</td>
+            <td id=n-kee-iframe>?</td>
+            <td id=n-kee-xhrstream>?</td>
+            <td id=n-kee-sse>?</td>
+            <td id=n-kee-longpoll>?</td>
         <tr><td>Reconnect timeout</td>
             <td id=n-rec-iframe>?</td>
             <td id=n-rec-xhrstream>?</td>
@@ -126,36 +151,82 @@
                 return function (data){
                     switch(stage){
                     case 0:
-                        set_result(transport, 'con',  data == 'connected!');
+                        var s = 'connected!';
+                        set_result(transport, 'con',  data == s);
+                        if(data != s){
+                            log(transport + ' data:   ' + escape(data));
+                            log(transport + ' expect: ' + escape(s));
+                        }
                         break;
                     case 1:
                         var s = ''
                         for(var i = 0; i < 128; i++)
                             s += String.fromCharCode(i)
                         set_result(transport, 'spe', data == s);
+                        if(data != s){
+                            log(transport + ' data:   ' + escape(data));
+                            log(transport + ' expect: ' + escape(s));
+                        }
                         break;
                     case 2:
                         set_result(transport, 'pa1',  data == 'padding1');
                         break;
                     case 3:
                         var s = 'На берегу пустынных волн ich sih in grâwen tägelîch als er wil tagen, He wes Leovenaðes sone -- liðe him be Drihten. ἀπὸ τὸ Ἄξιον ἐστί ვეპხის ტყაოსანი შოთა რუსთაველი   Μπορώ να φάω σπασμένα γυαλιά χωρίς να πάθω τίποτα.  ⠊⠀⠉⠁⠝⠀⠑⠁⠞⠀⠛⠇⠁⠎⠎⠀⠁⠝⠙⠀⠊⠞⠀⠙⠕⠑⠎⠝⠞⠀⠓⠥⠗⠞⠀⠍⠑  私はガラスを食べられます。それは私を傷つけません。';
-                        set_result(transport, 'utf', data == s);
-                        if(data != s){
-                            log(transport + ' data: ' + data);
-                            log(transport + ' s:    ' + s);
+                        set_result(transport, 'utf', escape(data) == escape(s));
+                        if(escape(data) != escape(s)){
+                            log(transport + ' data:   ' + escape(data));
+                            log(transport + ' expect: ' + escape(s));
                         }
                         break;
                     case 4:
                         var a = data.split(' ', 2);
                         var size = Number(a[0]);
                         var data = a[1];
-                        set_result(transport, 'big', size == data.length);
+                        if(data && size)
+                            set_result(transport, 'big', size == data.length);
+                        else
+                            set_result(transport, 'big', false);
                         break;
                     case 5:
                         set_result(transport, 'pa2',  data == 'padding2');
                         last_message_time = (new Date()).getTime()/1000.0;
                         break;
                     case 6:
+                        var s = "  \t\r\n\r\n\t \n\r  ";
+                        set_result(transport, 'whi',  data == s);
+                        if(data != s){
+                            log(transport + ' data:   ' + escape(data));
+                            log(transport + ' expect: ' + escape(s));
+                        }
+                        break;
+                    case 7:
+                        set_result(transport, 'pa3',  data == 'padding3');
+                        break;
+                    case 8:
+                        if(data == 'event1event2'){
+                            set_result(transport, 'buf',  '<b>CONCAT!</b>');
+                            stage += 1;
+                        }else
+                        if(data == 'event1'){
+                            set_result(transport, 'buf',  'ok1');
+                        }else{
+                            log(transport + ' buf data:   ' + data);
+                            set_result(transport, 'buf',  false);
+                        }
+                        break;
+                    case 9:
+                        if(data == 'event2'){
+                            set_result(transport, 'buf',  true);
+                        }else{
+                            log(transport + ' buf data:   ' + data);
+                            set_result(transport, 'buf',  false);
+                        }
+                        break;
+                    case 10:
+                        set_result(transport, 'pa4',  data == 'padding4');
+                        break;
+                    case 11:
                         delta = (new Date()).getTime()/1000.0 - last_message_time;
                         if(data == 'connected!')
                             set_result(transport, 'rec',  delta.toFixed(3) + 's');
@@ -167,7 +238,7 @@
                         transportclose[transport]();
                         timeoutId = window.setTimeout(function (){stage_2(transport);}, 3000);
                         break;
-                    case 6:
+                    case 12:
                         // never reached
                         window.clearTimeout(timeoutId);
                         set_result(transport, 'clo',  false);
@@ -189,14 +260,20 @@
         var m1 = '';
         var m2 = '';
         var t0 = 0;
-        var s = 'ms';
+        var st = 'ms';
         function callback(data){
             switch(stage){
             case 0:
-                set_result(transport, 'snd',  data == 'connected!');
+                var s = 'connected!';
+                set_result(transport, 'snd',  data == s);
+                if(data != s){
+                    log(transport + ' data:   ' + escape(data));
+                    log(transport + ' expect: ' + escape(s));
+                }
                 break;
             case 1:
                 uid = data;
+                log(transport +': uid=' + uid);
                 t0 = (new Date()).getTime();
                 new Ajax.Request('/echowrite?uid=' + escape(uid), {
                     method:'post',
@@ -213,8 +290,8 @@
                 }else{
                     t1 = (new Date()).getTime();
                     delta = t1-t0;
-                    s = ' ' + delta + s;
-                    set_result(transport, 'rtt',  s);
+                    st = ' ' + delta + st;
+                    set_result(transport, 'rtt',  st);
                     t0 = t1;
                     new Ajax.Request('/echowrite?uid=' + escape(uid), {
                         method:'post',
@@ -262,7 +339,13 @@
                 }
                 if(m1 == 'OK'  && m2 == 'OK'){
                     set_result(transport, 'mul',  true);
+                    transportclose[transport]();
+                    transportclose[transport+'2']();
                 }
+                break;
+            case 10:
+                transportclose[transport]();
+                transportclose[transport+'2']();
                 break;
            }
            stage += 1;

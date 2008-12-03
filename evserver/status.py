@@ -4,7 +4,7 @@ import gc
 import os
 import resource
 import meminfo
-import objgraph
+import other.objgraph as objgraph
 import random
 
 def wsgi_application(environ, start_response):

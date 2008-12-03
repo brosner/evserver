@@ -22,6 +22,7 @@ function getURLParam(strParamName){
 }
 
 function comet_log(arg){
+    arg = arg.substr(0, 512);
     if (typeof window.console !== 'undefined') {
       console.log(arg);
     }
@@ -62,4 +63,23 @@ function extract_xss_domain(old_domain) {
         }
     }
     return domain_pieces.slice(-2).join('.');
+}
+
+
+function encode_utf8( s )
+{
+    try{
+        return unescape( encodeURIComponent( s ) );
+    }catch(e){
+        return(s);
+    }
+}
+
+function decode_utf8( s )
+{
+    try{
+        return decodeURIComponent( escape( s ) );
+    }catch(e){
+        return(s);
+    }
 }

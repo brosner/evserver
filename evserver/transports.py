@@ -5,6 +5,7 @@ log = logging.getLogger(os.path.basename(__file__))
 import sys
 import uuid
 import re
+import urllib
 
 class Transport():
     callback = 'c'
@@ -44,6 +45,7 @@ class IFrameTransport(Transport):
 
     def __init__(self, *args, **kwargs):
         self.headers['Content-Type'] = 'text/html; charset=utf-8'
+        self.headers['Refresh'] = '3000'
         Transport.__init__(self, *args, **kwargs)
 
     initial_data = '''
@@ -80,20 +82,18 @@ class SSETransport(Transport):
 
     def __init__(self, *args, **kwargs):
         self.headers['Reconnection-Time'] = '2000'
+        self.headers['Refresh'] = '3000'
         self.headers['Content-Type'] = 'application/x-dom-event-stream; charset=UTF-8'
         self.headers['Cache-Control'] =  'no-cache, must-revalidate'
         Transport.__init__(self, *args, **kwargs)
 
     def start(self):
-        return 'Event: sessionid\ndata: %s\n\n\r\n' % (str(uuid.uuid4()).replace('-','')[:22],)
+        return 'Event: sessionid\ndata: %s\n\n' % (str(uuid.uuid4()).replace('-','')[:22],)
 
     def write(self, data):
-        data = json.write(data)
-        return (
-            'Event: payload\n' +
-            '\n'.join(['data: %s' % line for line in data.splitlines()]) +
-            '\n\n'
-        )
+        return  'Event: payload\n' +    \
+                'data: %s' % urllib.quote(data) + \
+                '\n\n'
 
 class XHRStreamTransport(Transport):
     boundary = '\r\n|O|\r\n'

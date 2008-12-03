@@ -44,6 +44,8 @@ function schedule_connection_xhr(url, callback, server_reconnect) {
                     offset = xhr.responseText.indexOf('\r\n\r\n');
                     if(offset == -1)
                         offset = 0;
+                    else
+                        offset += 4;
                 }
                 while(true){
                     if(!xhr || !xhr.responseText)
@@ -53,8 +55,7 @@ function schedule_connection_xhr(url, callback, server_reconnect) {
                     if(end == -1)
                         break;
                     offset = offset + end + boundary.length;
-                    var data = data.substr(0, end)
-                    callback(data);
+                    callback( decode_utf8(data.substr(0, end)) );
                 }
             }
     }
@@ -183,25 +184,31 @@ function hide_iframe(ifr) {
 
 /* server_sent_events for opera */
 function schedule_connection_sse(url, callback) {
-    comet_log('sse+' + url);
     var es = document.createElement('event-source');
     es.setAttribute('src', url +"&transport=sse");
     document.body.appendChild(es);
 
     var last_event = '';
     var event_callback = function (event){
-        if(last_event == event.data)
+        if(last_event == event.data){
+            comet_log('REPEATED EVENT: ' + event.data);
+            // OPERA SUCKS!
+            /*
+            s = '';
+            for(k in event)
+                s+= ' ' + k;
+
+            comet_log(s);
+            */
             return;
+        }
         if(callback){
-            var data = '';
-            try{
-                data = eval(event.data);
-            }catch(e){comet_log('eval exception '  + escape(event.data) ); };
-            if(data)
-                callback(data);
+            if(event.data)
+                callback(decode_utf8(unescape(event.data)));
         }
 
         last_event = event.data;
+        //event.data=null;
     };
 
     es.addEventListener('payload',   event_callback, false);
@@ -267,6 +274,7 @@ function comet_connection(url, user_callback_o, transport_local) {
     var keepalive_timer = null;
     var connect_function = null;
     var garbage_function = null;
+    var comet_transport = '';
     function get_url(url){
         var c = url;
         if(typeof(url) == "function")
@@ -277,11 +285,15 @@ function comet_connection(url, user_callback_o, transport_local) {
         return c;
     }
     function user_callback(data){
+        /*
         if(strip(data) == '' || data == 'ping'){
             //comet_log('comet: got keepalive');
             return;
         }
+        */
         //comet_log('comet: got data length:' + data.length);
+        if(typeof(data) != "string" && typeof(data)!="String")
+            data = '';
         user_callback_o(data);
     }
     function server_reconnect(conn_broken) {
@@ -290,12 +302,12 @@ function comet_connection(url, user_callback_o, transport_local) {
                     garbage_function();
                 garbage_function = null;
 
-                comet_log('comet: conn broken, reconnecting in '+ comet_restart_timeout +'....');
+                comet_log('comet: '+comet_transport +' conn broken, reconnecting in '+ comet_restart_timeout +'....');
                 setTimeout(function () {
                     garbage_function = connect_function(get_url(url), callback, server_reconnect);
                 }, comet_restart_timeout);
             }else{
-                comet_log('comet: no keepalive reconnecting now...');
+                comet_log('comet: '+comet_transport +' no keepalive reconnecting now...');
                 if(garbage_function)
                     garbage_function();
                 garbage_function = null;
@@ -311,12 +323,9 @@ function comet_connection(url, user_callback_o, transport_local) {
 
     var callback = function (data){
         update_keepalive();
-        data = strip(data);
-        if(data.length)
-            user_callback(data);
+        user_callback(data);
     };
 
-    var comet_transport = '';
     if(!transport_local){
         comet_transport = transport_global;
     }else{
