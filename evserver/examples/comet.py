@@ -19,7 +19,6 @@ urls = (
     '/static/([^/]+)', 'staticfiles',
     '/', 'staticfiles',
     '/comet', 'comet',
-    '/comet_lp', 'comet_longpolling',
     '/echoread',  'cometread',
     '/echowrite', 'cometwrite',
 )
@@ -47,9 +46,10 @@ class staticfiles:
 
 class comet:
     def GET(self):
-        lweb = web
         environ = web.ctx.environ # must cache it, becouse it's global!
         i = web.input(transport='iframe', callback='c')
+        if i.transport == 'longpoll':
+            return comet_longpoll().GET()
         t = transports.get_transport(i.transport, i.callback)
         for k, v in t.get_headers():
             web.header(k, v)
@@ -91,13 +91,12 @@ class comet:
             os.close(fd)
         web.ctx.output = iterator()
 
-class comet_longpolling:
+class comet_longpoll:
     def GET(self):
-        lweb = web
         environ = web.ctx.environ # must cache it, becouse it's global!
         i = web.input(eid='0')
-        t = transports.get_transport('longpolling')
         eid = int(i.eid)
+        t = transports.get_transport('longpoll')
         for k, v in t.get_headers():
             web.header(k, v)
 
@@ -109,7 +108,7 @@ class comet_longpolling:
                 pass
             fd = os.open(fname, os.O_RDONLY | os.O_NONBLOCK)
             try:
-                yield t.start()
+                #yield t.start()
                 if eid == 0:
                     yield t.write("connected!")
                 if eid == 1:
@@ -135,6 +134,13 @@ class comet_longpolling:
                 if eid == 7:
                     yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
                     yield t.write('padding3')
+                if eid == 8:
+                    yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
+                    yield t.write("event1")
+                    yield t.write("event2")
+                if eid == 9:
+                    yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
+                    yield t.write('padding4')
             except GeneratorExit:
                 pass
             os.close(fd)
@@ -163,6 +169,8 @@ class cometread:
         lweb = web
         environ = web.ctx.environ # must cache it, becouse it's global!
         i = web.input(transport='iframe', callback='c')
+        if i.transport == 'longpoll':
+            return cometread_longpoll().GET()
         t = transports.get_transport(i.transport, i.callback)
         for k, v in t.get_headers():
             web.header(k, v)
@@ -185,13 +193,42 @@ class cometread:
                 while True:
                     fd = os.open(fname, os.O_RDONLY | os.O_NONBLOCK)
                     os.read(fd, 4096)
-                    fd = os.open(fname, os.O_RDONLY | os.O_NONBLOCK)
-                    os.read(fd, 4096)
                     yield environ['x-wsgiorg.fdevent.readable'](fd)
                     yield t.write(os.read(fd, 4096))
                     os.close(fd)
             except GeneratorExit:
                 pass
+            os.unlink(fname)
+        web.ctx.output = iterator()
+
+class cometread_longpoll:
+    def GET(self):
+        environ = web.ctx.environ # must cache it, becouse it's global!
+        i = web.input(eid='0', a='default')
+        eid = int(i.eid)
+        uid = str(i.a).replace('.','').replace('/','')
+        t = transports.get_transport('longpoll')
+        for k, v in t.get_headers():
+            web.header(k, v)
+
+        def iterator():
+            fname = '/tmp/fifo-%s' % (uid,)
+            try:
+                os.mkfifo(fname)
+            except OSError:
+                pass
+            if eid == 0:
+                yield t.write('connected!')
+            elif eid == 1:
+                yield t.write(uid)
+            else:
+                try:
+                    fd = os.open(fname, os.O_RDONLY | os.O_NONBLOCK)
+                    yield environ['x-wsgiorg.fdevent.readable'](fd)
+                    yield t.write(os.read(fd, 4096))
+                    os.close(fd)
+                except GeneratorExit:
+                    pass
             os.unlink(fname)
         web.ctx.output = iterator()
 

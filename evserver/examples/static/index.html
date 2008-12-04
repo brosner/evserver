@@ -137,12 +137,10 @@
             document.getElementById('n-' + t +'-'+transport).innerHTML= result;
     }
 
-    var tested_transports = ['iframe', 'xhrstream','sse'];
 
-    function stage_1(){
-        var transportclose = {};
-        for(var i = 0; i < tested_transports.length; i++) {
-            var gtransport = tested_transports[i];
+
+    function stage_1(gtransport){
+            var transportclose = {};
             function get_callback(){
                 var transport = gtransport;
                 var stage = 0;
@@ -249,7 +247,6 @@
             }
             transportclose[gtransport] = comet_connection('/comet', get_callback(), gtransport);
         }
-    } // stage_1
 
     function stage_2(transport){
         var transportclose = {};
@@ -353,7 +350,10 @@
         transportclose[transport] = comet_connection('/echoread', callback, transport);
     }
 
-    stage_1();
+    var tested_transports = ['iframe', 'xhrstream','sse', 'longpoll'];
+    for(var i = 0; i < tested_transports.length; i++)
+        stage_1(tested_transports[i])
+
 -->
 </script>
 </html>

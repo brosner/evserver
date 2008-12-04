@@ -90,6 +90,59 @@ function schedule_connection_xhr(url, callback, server_reconnect) {
 }
 
 
+/* long polling */
+function schedule_connection_longpoll(url, callback, server_reconnect) {
+    var xhr = null;
+    var eid = 0;
+    var schedule = function(){
+        if(xhr){
+            try{
+                xhr.onreadystatechange=function () {};
+                xhr.abort();
+            }catch(e){};
+            try{
+                delete(xhr);
+            }catch(e){};
+        }
+        xhr = create_xhr();
+        xhr.onreadystatechange = function() {
+                if(xhr.readyState==4){
+                    if(xhr.status==200){
+                        eid += 1;
+                        var data = xhr.responseText;
+                        if(schedule)
+                            schedule();
+
+                        callback( data );
+                    }else
+                        server_reconnect(true);
+                }
+        }
+
+        xhr.open('GET', url + '&transport=longpoll&eid=' + eid, true);
+        xhr.send(null);
+    };
+
+    schedule();
+
+    function xhr_gc(){
+        if(xhr){
+            try{
+                xhr.onreadystatechange=function () {};
+                xhr.abort();
+            }catch(e){};
+        }
+        delete(xhr);
+        xhr = null;
+        delete(schedule);
+        schedule = null;
+    };
+
+    return xhr_gc;
+}
+
+
+
 /* htmlfile, for ie */
 function schedule_connection_htmlfile(url, user_callback, server_reconnect) {
     var i=0; while(window['c'+i] != undefined) i += 1;
@@ -230,6 +283,7 @@ function schedule_connection_sse(url, callback) {
 comet_transports = {
     xhr:    schedule_connection_xhr,
     xhrstream:    schedule_connection_xhr,
+    longpoll:     schedule_connection_longpoll,
     htmlfile: schedule_connection_htmlfile,
     iframe: schedule_connection_iframe,
     sse:    schedule_connection_sse

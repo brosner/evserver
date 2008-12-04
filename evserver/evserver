@@ -1,5 +1,27 @@
 #!/usr/bin/env python
 import main
 import sys
+import os
 
-main.main(sys.argv[1:])
+
+def run_evserver():
+    main.main(sys.argv[1:])
+
+if os.environ.get('PROFILE', '').lower() == 'profile':
+    print >> sys.stderr, " [*] Running with PROFILE profiler"
+    import cProfile as profile
+    profile.run('run_evserver()')
+
+elif os.environ.get('PROFILE', '').lower() == 'hotshot':
+    print >> sys.stderr, " [*] Running with HOTSHOT profiler"
+    import hotshot, hotshot.stats, test.pystone
+    prof = hotshot.Profile("stones.prof")
+    prof.runcall(run_evserver)
+    prof.close()
+    stats = hotshot.stats.load("stones.prof")
+    stats.strip_dirs()
+    stats.sort_stats('time', 'calls')
+    stats.print_stats(20)
+
+else:
+    run_evserver()

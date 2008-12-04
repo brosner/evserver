@@ -51,7 +51,14 @@ class Request:
     def __init__(self, evreq, vhostdata):
         self.application = vhostdata['application']
         self.timeout = []
-        self.out_dict = copy.deepcopy(self.standard_out_dict)
+        self.out_dict = {
+            'code' : 500,
+            'reason' : "Internal Error",
+            'headers' : [('Content-type','text/plain'),],
+            'transmitted': False,
+            'chunked': False,
+        }
+
         self.created = server.now
         self.vhostdata = vhostdata
         self.environ = self.request_to_environ(evreq)

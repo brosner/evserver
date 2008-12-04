@@ -12,7 +12,7 @@ class Transport():
     domain   = None
     headers  = {
         'Cache-Control': 'no-cache',
-        'Content-Type': 'text/plain',
+        'Content-Type': 'text/plain; charset=UTF-8',
     }
     name = None
 
@@ -30,9 +30,21 @@ class Transport():
     def get_headers(self):
         return self.headers.items()
 
+
+class LongPoll(Transport):
+    def __init__(self, *args, **kwargs):
+        self.headers['Content-Type'] = 'application/x-orbited-event-stream; charset=utf-8'
+        Transport.__init__(self, *args, **kwargs)
+
+    def start(self):
+        return ''
+
+    def write(self, data):
+        return '''%s''' % (data)
+
 class BasicTransport(Transport):
     def __init__(self, *args, **kwargs):
-        self.headers['Content-Type'] = 'text/html'
+        self.headers['Content-Type'] = 'text/html; charset=UTF-8'
         Transport.__init__(self, *args, **kwargs)
 
     def start(self):
@@ -100,7 +112,6 @@ class XHRStreamTransport(Transport):
 
     def __init__(self, *args, **kwargs):
         self.headers['Content-Type'] = 'application/x-orbited-event-stream; charset=utf-8'
-
         Transport.__init__(self, *args, **kwargs)
 
     initial_data = '.'*256 + '\r\n\r\n'
@@ -157,6 +168,7 @@ class XHRMultipartTransport(Transport):
 
 transports = {
     'basic':                BasicTransport,
+    'longpoll':             LongPoll,
     'iframe':               IFrameTransport,
     'htmlfile':             IFrameTransport,
     'server_sent_events':   SSETransport,

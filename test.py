@@ -9,6 +9,17 @@ import sys
 import traceback
 import fcntl
 
+'''
+    return string
+    return tuple
+    return list
+    return yield, just yield
+    return unicode
+    exception in the handler
+    exception in the iterator
+    exception in the close
+'''
+
 try:
     os.mkfifo('/tmp/fifo')
 except OSError:
