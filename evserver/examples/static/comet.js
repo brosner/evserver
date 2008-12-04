@@ -114,8 +114,12 @@ function schedule_connection_longpoll(url, callback, server_reconnect) {
                             schedule();
 
                         callback( data );
-                    }else
-                        server_reconnect(true);
+                    }else{
+                        // just try again:
+                        if(schedule)
+                            schedule();
+                        // server_reconnect(true);
+                    }
                 }
         }
 
