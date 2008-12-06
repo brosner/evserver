@@ -1,9 +1,10 @@
 #
-# PYTHONPATH=. evserver --exec "import framework_webpy; application = framework_webpy.application"
+# evserver --exec "import examples.framework_webpy; application = examples.framework_webpy.application"
 #
 import web
 import os
 import datetime
+import socket
 
 urls = (
     '/(.*)', 'webpy_clock'
@@ -12,15 +13,16 @@ urls = (
 class webpy_clock:
     def GET(self, name):
         web.header('Content-Type','text/plain', unique=True)
+        environ = web.ctx.environ
         def iterable():
-            fd = os.open('/dev/null', os.O_RDONLY)
+            sd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # any udp socket
             try:
                 while True:
-                    yield web.ctx.environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
+                    yield environ['x-wsgiorg.fdevent.readable'](sd, 1.0)
                     yield "%s\n" % (datetime.datetime.now(),)
             except GeneratorExit:
                 pass
-            os.close(fd)
+            sd.close()
         web.ctx.output = iterable()
 
 # from http://code.google.com/p/modwsgi/wiki/IntegrationWithWebPy
