@@ -86,6 +86,10 @@ class comet:
                 yield t.write("event2")
                 yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
                 yield t.write('padding4')
+                yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
+                yield t.write('padding4')
+                yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
+                yield t.write('padding5')
             except GeneratorExit:
                 pass
             os.close(fd)
@@ -99,6 +103,9 @@ class comet_longpoll:
         t = transports.get_transport('longpoll')
         for k, v in t.get_headers():
             web.header(k, v)
+
+        if eid > 13:
+            raise Exception
 
         def iterator():
             fname = '/tmp/fifo'
@@ -141,6 +148,16 @@ class comet_longpoll:
                 if eid == 9:
                     yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
                     yield t.write('padding4')
+                if eid == 10:
+                    yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
+                    yield t.write('padding4')
+                if eid == 11:
+                    yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
+                    yield t.write('padding5')
+                if eid == 12:
+                    pass
+                if eid == 13:
+                    yield environ['x-wsgiorg.fdevent.readable'](fd)
             except GeneratorExit:
                 pass
             os.close(fd)

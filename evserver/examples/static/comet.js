@@ -27,7 +27,7 @@ comet_keepalive_timeout = 76*1000;  // 66 seconds with no data
         - function that is going to destroy current conenction
           for garbage collecting
     */
-safari = 0;
+
 /* xhr stream, for firefox and safari */
 function schedule_connection_xhr(url, callback, server_reconnect) {
     var boundary = '\r\n|O|\r\n';
@@ -76,16 +76,6 @@ function schedule_connection_xhr(url, callback, server_reconnect) {
         xhr = null;
     };
 
-    if(safari == 1){
-        /* kill loading bar on safari */
-        function f(){
-            xhr.abort();
-            server_reconnect(false);
-        }
-        setTimeout(f, 500);
-        safari = 2;
-    }
-
     return xhr_gc;
 }
 
@@ -115,10 +105,7 @@ function schedule_connection_longpoll(url, callback, server_reconnect) {
 
                         callback( data );
                     }else{
-                        // just try again:
-                        if(schedule)
-                            schedule();
-                        // server_reconnect(true);
+                        server_reconnect(true);
                     }
                 }
         }
@@ -175,19 +162,20 @@ function schedule_connection_htmlfile(url, user_callback, server_reconnect) {
                             '&callback=' + fname +
                             "' ></iframe>";
 
-
     // for ie 6
     kill_load_bar();
     function htmlfile_close() {
+        window[fname] = function(){};
+        window[fname+'_reconnect'] = function(){};
         if(transferDoc){
             transferDoc.body.removeChild(ifrDiv);
+            delete(trasferDoc);
+            transferDoc = null;
         }
-        delete(ifrDiv);
-        ifrDiv = null;
-        delete(trasferDoc);
-        transferDoc = null;
-        window[fname] = null;
-        window[fname+'_reconnect'] = null;
+        if(ifrDiv){
+            delete(ifrDiv);
+            ifrDiv = null;
+        }
         CollectGarbage();
     }
     document.attachEvent('on'+'unload', htmlfile_close);
@@ -199,7 +187,6 @@ function schedule_connection_htmlfile(url, user_callback, server_reconnect) {
 function schedule_connection_iframe(url, user_callback, server_reconnect) {
     var i=0; while(window['c'+i] != undefined) i += 1;
     var fname = 'c' + i;
-
     window[fname] = function (data){
         user_callback(data);
         kill_load_bar();
@@ -214,16 +201,25 @@ function schedule_connection_iframe(url, user_callback, server_reconnect) {
                             '&transport=iframe'+
                             '&callback=' + fname );
     document.body.appendChild(ifr);
-    kill_load_bar();
 
-    return function () {
-        if(ifr)
+    kill_load_bar();
+    var gc = function () {
+        window[fname] = function(){};
+        window[fname+'_reconnect'] = function(){};
+        if(ifr){
             document.body.removeChild(ifr);
-        delete(ifr);
-        ifr=null;
-        window[fname] = null;
-        window[fname+'_reconnect'] = null;
+            delete(ifr);
+            ifr=null;
+        }
+        try{
+            CollectGarbage();
+        }catch(e){};
     };
+    try{
+        document.attachEvent('on'+'unload', gc);
+        window.attachEvent('on'+'unload', gc);
+    }catch(e){};
+    return gc;
 }
 function hide_iframe(ifr) {
     ifr.style.display = 'block';
@@ -239,24 +235,22 @@ function hide_iframe(ifr) {
 
 
 
-/* server_sent_events for opera */
+/* server_sent_events for opera
+opera 9.60 is delivering messages _TWICE_.
+to fix that we need to keep track on messages. fuck.
+If they will fix it, it's going to be a huge memory drainer.
+*/
 function schedule_connection_sse(url, callback) {
     var es = document.createElement('event-source');
     es.setAttribute('src', url +"&transport=sse");
     document.body.appendChild(es);
 
-    var last_event = '';
+    var last_events = {};
     var event_callback = function (event){
-        if(last_event == event.data){
+        var k = event.data.substr(0,32);
+        if(last_events[k]){
             comet_log('REPEATED EVENT: ' + event.data);
-            // OPERA SUCKS!
-            /*
-            s = '';
-            for(k in event)
-                s+= ' ' + k;
-
-            comet_log(s);
-            */
+            delete(last_events[k]);
             return;
         }
         if(callback){
@@ -264,14 +258,13 @@ function schedule_connection_sse(url, callback) {
                 callback(decode_utf8(unescape(event.data)));
         }
 
-        last_event = event.data;
-        //event.data=null;
+        last_events[k] = true;
     };
 
     es.addEventListener('payload',   event_callback, false);
 
 
-    return function () {
+    var gc = function () {
         if(es){
             es.removeEventListener('payload',   event_callback, false);
             document.body.removeChild(es);
@@ -281,6 +274,7 @@ function schedule_connection_sse(url, callback) {
         delete(es);
         es = null;
     };
+    return gc;
 }
 
 
@@ -311,10 +305,10 @@ function guess_transport() {
 
     if( navigator.userAgent.indexOf('Safari')!= -1 ||  navigator.userAgent.indexOf('Webkit')!= -1){
         safari = 1;
-        return 'xhr';
+        return 'xhrstream';
     }
 
-    return 'xhr';
+    return 'xhrstream';
 }
 
 transport_global = guess_transport();
@@ -398,13 +392,14 @@ function comet_connection(url, user_callback_o, transport_local) {
     }
 
     garbage_function = connect_function(get_url(url), callback, server_reconnect);
-    return function (){
+    var xx = function (){
         clearTimeout(keepalive_timer);
         if(garbage_function)
             garbage_function();
         if(comet_log)
             comet_log('comet: cleaning connection');
     }
+    return xx;
 }
 
 

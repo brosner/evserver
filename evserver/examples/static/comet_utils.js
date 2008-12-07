@@ -44,6 +44,17 @@ function create_xhr() {
     throw new Error('Could not find XMLHttpRequest or an alternative.');
 }
 
+function post_ajax(url, data){
+    var xhr = create_xhr();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xhr.setRequestHeader("Content-length", data.length);
+    xhr.setRequestHeader("Connection", "close");
+    xhr.send(data);
+    return(xhr);
+}
+
+
 load_kill_ifr = null;
 function  kill_load_bar() {
     if (load_kill_ifr == null) {

@@ -27,90 +27,135 @@
         It doesn't check if <i>comet</i> is visible on your browser. You can see rotating hourglass, rotating wheel
         or active stop button on your browser. I can't test that.
     </p>
+    <p>
+        The goal of this test is to make sure that the default transport (name in bold) is working correctly, without
+        any fancy effects on browser.
+        It would be nice if other transports would work, but it's not required.
+    </p>
+    <p>
+        Long polling transport is here only for testing purposes. It's not actually a Comet transport, in the sense that many connections are needed
+        to send data.
+    </p>
     <h3>Current domain tests</h3>
+    <button id=but-all onclick="run_all_tests(this);">test all transports</button>
     <table border=1>
         <tr><td></td>
-            <td>iframe</td>
-            <td>xhrstream</td>
-            <td>sse</td>
-            <td>long polling</td>
+            <td id=header-iframe>iframe</td>
+            <td id=header-htmlfile>htmlfile</td>
+            <td id=header-xhrstream>xhrstream</td>
+            <td id=header-sse>sse</td>
+            <td id=header-longpoll>long polling</td>
+        <tr><td ></td>
+            <td ><button id=but-iframe onclick="run_test(this, 'iframe');">run</button></td>
+            <td ><button id=but-htmlfile onclick="run_test(this, 'htmlfile');">run</button></td>
+            <td ><button id=but-xhrstream onclick="run_test(this, 'xhrstream');">run</button></td>
+            <td ><button id=but-sse onclick="run_test(this, 'sse');">run</button></td>
+            <td ><button id=but-longpoll onclick="run_test(this, 'longpoll');">run</button></td>
         <tr><td>Connection</td>
             <td id=n-con-iframe>?</td>
+            <td id=n-con-htmlfile>?</td>
             <td id=n-con-xhrstream>?</td>
             <td id=n-con-sse>?</td>
             <td id=n-con-longpoll>?</td>
         <tr><td>Special chars</td>
             <td id=n-spe-iframe>?</td>
+            <td id=n-spe-htmlfile>?</td>
             <td id=n-spe-xhrstream>?</td>
             <td id=n-spe-sse>?</td>
             <td id=n-spe-longpoll>?</td>
         <tr><td>Padding</td>
             <td id=n-pa1-iframe>?</td>
+            <td id=n-pa1-htmlfile>?</td>
             <td id=n-pa1-xhrstream>?</td>
             <td id=n-pa1-sse>?</td>
             <td id=n-pa1-longpoll>?</td>
         <tr><td>Utf encoding</td>
             <td id=n-utf-iframe>?</td>
+            <td id=n-utf-htmlfile>?</td>
             <td id=n-utf-xhrstream>?</td>
             <td id=n-utf-sse>?</td>
             <td id=n-utf-longpoll>?</td>
         <tr><td>Big transfer</td>
             <td id=n-big-iframe>?</td>
+            <td id=n-big-htmlfile>?</td>
             <td id=n-big-xhrstream>?</td>
             <td id=n-big-sse>?</td>
             <td id=n-big-longpoll>?</td>
         <tr><td>Padding</td>
             <td id=n-pa2-iframe>?</td>
+            <td id=n-pa2-htmlfile>?</td>
             <td id=n-pa2-xhrstream>?</td>
             <td id=n-pa2-sse>?</td>
             <td id=n-pa2-longpoll>?</td>
         <tr><td>Whitespace</td>
             <td id=n-whi-iframe>?</td>
+            <td id=n-whi-htmlfile>?</td>
             <td id=n-whi-xhrstream>?</td>
             <td id=n-whi-sse>?</td>
             <td id=n-whi-longpoll>?</td>
         <tr><td>Padding</td>
             <td id=n-pa3-iframe>?</td>
+            <td id=n-pa3-htmlfile>?</td>
             <td id=n-pa3-xhrstream>?</td>
             <td id=n-pa3-sse>?</td>
             <td id=n-pa3-longpoll>?</td>
         <tr><td>Buffered events</td>
             <td id=n-buf-iframe>?</td>
+            <td id=n-buf-htmlfile>?</td>
             <td id=n-buf-xhrstream>?</td>
             <td id=n-buf-sse>?</td>
             <td id=n-buf-longpoll>?</td>
         <tr><td>Padding</td>
             <td id=n-pa4-iframe>?</td>
+            <td id=n-pa4-htmlfile>?</td>
             <td id=n-pa4-xhrstream>?</td>
             <td id=n-pa4-sse>?</td>
             <td id=n-pa4-longpoll>?</td>
-        <tr><td>Keepalives</td>
+        <tr><td>Repeted events</td>
+            <td id=n-rep-iframe>?</td>
+            <td id=n-rep-htmlfile>?</td>
+            <td id=n-rep-xhrstream>?</td>
+            <td id=n-rep-sse>?</td>
+            <td id=n-rep-longpoll>?</td>
+        <tr><td>Padding</td>
+            <td id=n-pa5-iframe>?</td>
+            <td id=n-pa5-htmlfile>?</td>
+            <td id=n-pa5-xhrstream>?</td>
+            <td id=n-pa5-sse>?</td>
+            <td id=n-pa5-longpoll>?</td>
+<!--        <tr><td>Keepalives</td>
             <td id=n-kee-iframe>?</td>
+            <td id=n-kee-htmlfile>?</td>
             <td id=n-kee-xhrstream>?</td>
             <td id=n-kee-sse>?</td>
-            <td id=n-kee-longpoll>?</td>
+            <td id=n-kee-longpoll>?</td> -->
         <tr><td>Reconnect timeout</td>
             <td id=n-rec-iframe>?</td>
+            <td id=n-rec-htmlfile>?</td>
             <td id=n-rec-xhrstream>?</td>
             <td id=n-rec-sse>?</td>
             <td id=n-rec-longpoll>?</td>
         <tr><td>Active close</td>
             <td id=n-clo-iframe>ok</td>
+            <td id=n-clo-htmlfile>ok</td>
             <td id=n-clo-xhrstream>ok</td>
             <td id=n-clo-sse>ok</td>
             <td id=n-clo-longpoll>ok</td>
         <tr><td>Sending data</td>
             <td id=n-snd-iframe>?</td>
+            <td id=n-snd-htmlfile>?</td>
             <td id=n-snd-xhrstream>?</td>
             <td id=n-snd-sse>?</td>
             <td id=n-snd-longpoll>?</td>
         <tr><td>Round-trip time</td>
             <td id=n-rtt-iframe>?</td>
+            <td id=n-rtt-htmlfile>?</td>
             <td id=n-rtt-xhrstream>?</td>
             <td id=n-rtt-sse>?</td>
             <td id=n-rtt-longpoll>?</td>
         <tr><td>Multiple channels</td>
             <td id=n-mul-iframe>?</td>
+            <td id=n-mul-htmlfile>?</td>
             <td id=n-mul-xhrstream>?</td>
             <td id=n-mul-sse>?</td>
             <td id=n-mul-longpoll>?</td>
@@ -119,6 +164,12 @@
     <pre id="logger" class="box"></pre>
 <script>
 <!--
+    // highlight automatic transport
+    try{
+        var o = document.getElementById('header-' + transport_global);
+        o.innerHTML = '<b>' + o.innerHTML + '</b>';
+    }catch(e){};
+
     var logger = document.getElementById('logger');
     logger.v = ''
 
@@ -140,7 +191,7 @@
 
 
     function stage_1(gtransport){
-            var transportclose = {};
+            var transportclose = null;
             function get_callback(){
                 var transport = gtransport;
                 var stage = 0;
@@ -162,8 +213,12 @@
                             s += String.fromCharCode(i)
                         set_result(transport, 'spe', data == s);
                         if(data != s){
-                            log(transport + ' data:   ' + escape(data));
-                            log(transport + ' expect: ' + escape(s));
+                            if(s.substr(1) == data || s.substr(1) == data.substr(1))
+                                set_result(transport, 'spe', '\\0 removed');
+                            else{
+                                log(transport + ' data:   ' + escape(data));
+                                log(transport + ' expect: ' + escape(s));
+                            }
                         }
                         break;
                     case 2:
@@ -203,7 +258,7 @@
                         break;
                     case 8:
                         if(data == 'event1event2'){
-                            set_result(transport, 'buf',  '<b>CONCAT!</b>');
+                            set_result(transport, 'buf',  'joined');
                             stage += 1;
                         }else
                         if(data == 'event1'){
@@ -222,22 +277,37 @@
                         }
                         break;
                     case 10:
-                        set_result(transport, 'pa4',  data == 'padding4');
+                        var s = 'padding4';
+                        set_result(transport, 'pa4',  data == s);
+                        if(data != s){
+                            log(transport + ' data:   ' + escape(data));
+                            log(transport + ' expect: ' + escape(s));
+                        }
                         break;
                     case 11:
-                        delta = (new Date()).getTime()/1000.0 - last_message_time;
+                        var s = 'padding4';
+                        set_result(transport, 'rep',  data == s);
+                        if(data != s){
+                            log(transport + ' data:   ' + escape(data));
+                            log(transport + ' expect: ' + escape(s));
+                        }
+                        if(data == "padding5") stage += 1;
+                        break;
+                    case 12:
+                        set_result(transport, 'pa5',  data == 'padding5');
+                        break;
+                    case 13:
+                        var delta = (new Date()).getTime()/1000.0 - last_message_time;
                         if(data == 'connected!')
                             set_result(transport, 'rec',  delta.toFixed(3) + 's');
                         else{
                             set_result(transport, 'rec',  false);
-                            log(transport + ' : ' + data);
                         }
                         // active close
-                        transportclose[transport]();
+                        transportclose();
                         timeoutId = window.setTimeout(function (){stage_2(transport);}, 3000);
                         break;
-                    case 12:
-                        // never reached
+                    case 14:
                         window.clearTimeout(timeoutId);
                         set_result(transport, 'clo',  false);
                         break;
@@ -245,24 +315,23 @@
                     stage += 1;
                 }
             }
-            transportclose[gtransport] = comet_connection('/comet', get_callback(), gtransport);
+            transportclose = comet_connection('/comet', get_callback(), gtransport);
         }
 
     function stage_2(transport){
         var transportclose = {};
-        log('asd');
         var stage = 0;
         var uid = '';
         var uid2 = '';
         var m1 = '';
         var m2 = '';
         var t0 = 0;
-        var st = 'ms';
+        var t_avg = new Array();
+        var timeoutId=null;
         function callback(data){
             switch(stage){
             case 0:
                 var s = 'connected!';
-                set_result(transport, 'snd',  data == s);
                 if(data != s){
                     log(transport + ' data:   ' + escape(data));
                     log(transport + ' expect: ' + escape(s));
@@ -272,14 +341,11 @@
                 uid = data;
                 log(transport +': uid=' + uid);
                 t0 = (new Date()).getTime();
-                new Ajax.Request('/echowrite?uid=' + escape(uid), {
-                    method:'post',
-                    postBody:'TEST' + (stage+1)
-                });
+                post_ajax('/echowrite?uid=' + escape(uid), 'TEST' + (stage+1));
                 break;
             case 2:
-            case 3:
-            case 4:
+                set_result(transport, 'snd',  true);
+
                 if(data != ('TEST' + stage) ){
                     log(transport +': rtt'+stage + ' is: ' + data);
                     log(transport +': rtt'+stage + ' be: ' + 'TEST'+stage);
@@ -287,19 +353,40 @@
                 }else{
                     t1 = (new Date()).getTime();
                     delta = t1-t0;
-                    st = ' ' + delta + st;
-                    set_result(transport, 'rtt',  st);
+                    t_avg = t_avg.concat([delta]);
+                    set_result(transport, 'rtt',  t_avg.length + '/20');
                     t0 = t1;
-                    new Ajax.Request('/echowrite?uid=' + escape(uid), {
-                        method:'post',
-                        postBody:'TEST' + (stage+1)
-                    });
+                    if(t_avg.length < 20){
+                        stage -=1;
+                    }else{
+                        var sum = 0.0;
+                        var t_min = 9999;
+                        var t_max = 0;
+                        var s='';
+                        for(var i=0; i < t_avg.length; i++){
+                            var t = t_avg[i];
+                            if(t < t_min) t_min = t;
+                            if(t > t_max) t_max = t;
+                            sum += t;
+                            s += t + ' '
+                        }
+                        var avg = sum / t_avg.length.toFixed(10);
+                        set_result(transport, 'rtt',  t_min + '/' + avg.toFixed(0) + '/' + t_max + ' ms');
+                        log(transport + ' round trip times in ms: ' + s);
+                    }
+                    post_ajax('/echowrite?uid=' + escape(uid), 'TEST' + (stage+1));
                 }
                 break;
-            case 5:
-                transportclose[transport+'2'] = comet_connection('/echoread', callback, transport);
+            case 3:
+                // don't even try for IE
+                if(transport != 'htmlfile')
+                    transportclose[transport+'2'] = comet_connection('/echoread', callback, transport);
+                else{
+                    set_result(transport, 'mul',  false);
+                    transportclose[transport]();
+                }
                 break;
-            case 6:
+            case 4:
                 if(data != 'connected!'){
                     log(transport +': mul is: ' + data);
                     log(transport +': mul be: ' + 'connected!');
@@ -308,21 +395,23 @@
                     transportclose[transport+'2']();
                 }
                 break;
-            case 7:
+            case 5:
                 uid2 = data;
                 m1 = '' + Math.random();
                 m2 = '' + Math.random();
-                new Ajax.Request('/echowrite?uid=' + escape(uid), {
-                    method:'post',
-                    postBody:m1
-                });
-                new Ajax.Request('/echowrite?uid=' + escape(uid2), {
-                    method:'post',
-                    postBody:m2
-                });
+                post_ajax('/echowrite?uid=' + escape(uid), m1);
+                post_ajax('/echowrite?uid=' + escape(uid2), m2);
+                timeoutId = window.setTimeout(function (){
+                            set_result(transport, 'mul',  false);
+                            document.getElementById('but-' + transport).disabled = false;
+                            transportclose[transport]();
+                            transportclose[transport+'2']();
+                        }, 3000);
                 break;
-            case 8:
-            case 9:
+            case 6:
+            case 7:
+                if(timeoutId)
+                    window.clearTimeout(timeoutId);
                 if(data == m1){
                     m1 = 'OK';
                 }else if(data == m2){
@@ -331,18 +420,21 @@
                     log(transport +': mul is: ' + data);
                     log(transport +': mul be: ' + m1 + ' or ' + m2);
                     set_result(transport, 'mul',  false);
+                    document.getElementById('but-' + transport).disabled = false;
                     transportclose[transport]();
                     transportclose[transport+'2']();
                 }
                 if(m1 == 'OK'  && m2 == 'OK'){
                     set_result(transport, 'mul',  true);
+                    document.getElementById('but-' + transport).disabled = false;
                     transportclose[transport]();
                     transportclose[transport+'2']();
                 }
                 break;
-            case 10:
+            case 8:
                 transportclose[transport]();
                 transportclose[transport+'2']();
+                document.getElementById('but-' + transport).disabled = false;
                 break;
            }
            stage += 1;
@@ -350,10 +442,27 @@
         transportclose[transport] = comet_connection('/echoread', callback, transport);
     }
 
-    var tested_transports = ['iframe', 'xhrstream','sse', 'longpoll'];
-    for(var i = 0; i < tested_transports.length; i++)
-        stage_1(tested_transports[i])
+    var tested_transports = ['iframe', 'htmlfile', 'xhrstream','sse', 'longpoll'];
+    document.getElementById('but-all').disabled = false;
+    for(var i = 0; i < tested_transports.length; i++){
+            var transport = tested_transports[i];
+            document.getElementById('but-' + transport).disabled = false;
+    }
 
+    function run_all_tests(t){
+        document.getElementById('but-all').disabled = true;
+        for(var i = 0; i < tested_transports.length; i++){
+            var transport = tested_transports[i];
+            document.getElementById('but-' + transport).disabled = true;
+            try{
+            stage_1(transport);
+            }catch(e){log(transport + ': exception ' + e);}
+        }
+    }
+    function run_test(t, transport){
+            document.getElementById('but-' + transport).disabled = true;
+            stage_1(transport);
+    }
 -->
 </script>
 </html>
