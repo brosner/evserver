@@ -2,7 +2,6 @@
     Based on orbited.js from the Orbited project.
 */
 
-
 /********************************************************************/
 /** settings **/
 /* how long to wait after the connection is lost (server died) */
@@ -34,8 +33,9 @@ function schedule_connection_xhr(url, callback, server_reconnect) {
     var xhr = null;
     var offset = 0;
 
-    xhr = create_xhr();
-    xhr.onreadystatechange = function() {
+    var onreadystatechange = function(event) {
+            if(!xhr)
+                return;
             if(xhr.readyState==4)
                 server_reconnect(true);
             else if(xhr.readyState==3 && xhr.status==200) {
@@ -59,9 +59,7 @@ function schedule_connection_xhr(url, callback, server_reconnect) {
                 }
             }
     }
-    xhr.open('GET', url + '&transport=xhr', true);
-    xhr.send(null);
-
+    xhr = comet_create_ajax(url + '&transport=xhr', 'GET', null, onreadystatechange);
 
     function xhr_gc(){
         if(xhr){
@@ -94,8 +92,7 @@ function schedule_connection_longpoll(url, callback, server_reconnect) {
                 delete(xhr);
             }catch(e){};
         }
-        xhr = create_xhr();
-        xhr.onreadystatechange = function() {
+        var onreadystatechange = function() {
                 if(xhr.readyState==4){
                     if(xhr.status==200){
                         eid += 1;
@@ -109,9 +106,7 @@ function schedule_connection_longpoll(url, callback, server_reconnect) {
                     }
                 }
         }
-
-        xhr.open('GET', url + '&transport=longpoll&eid=' + eid, true);
-        xhr.send(null);
+        xhr = comet_create_ajax(url + '&transport=longpoll&eid=' + eid, 'GET', null, onreadystatechange)
     };
 
     schedule();
@@ -178,8 +173,7 @@ function schedule_connection_htmlfile(url, user_callback, server_reconnect) {
         }
         CollectGarbage();
     }
-    document.attachEvent('on'+'unload', htmlfile_close);
-    window.attachEvent('on'+'unload', htmlfile_close);
+    comet_attach_unload_event(htmlfile_close);
     return htmlfile_close;
 }
 
@@ -215,10 +209,7 @@ function schedule_connection_iframe(url, user_callback, server_reconnect) {
             CollectGarbage();
         }catch(e){};
     };
-    try{
-        document.attachEvent('on'+'unload', gc);
-        window.attachEvent('on'+'unload', gc);
-    }catch(e){};
+    comet_attach_unload_event(gc);
     return gc;
 }
 function hide_iframe(ifr) {
@@ -304,7 +295,6 @@ function guess_transport() {
         return 'iframe';
 
     if( navigator.userAgent.indexOf('Safari')!= -1 ||  navigator.userAgent.indexOf('Webkit')!= -1){
-        safari = 1;
         return 'xhrstream';
     }
 
@@ -406,9 +396,12 @@ function comet_connection(url, user_callback_o, transport_local) {
 
 
 /********************************************************************/
-function comet_schedule_crossdomain(iframe_uri, comet_uri, user_callback){
+function comet_crossdomain_connection(iframe_uri, comet_uri, user_callback, transport){
     var i=0; while(window['c'+i] != undefined) i += 1;
     var fname = 'c' + i;
+    var transportstr = '';
+    if(transport)
+        transportstr = '&transport=' + transport;
 
     comet_log('cometcrossdomain: started');
 
@@ -421,7 +414,7 @@ function comet_schedule_crossdomain(iframe_uri, comet_uri, user_callback){
     var ifr = document.createElement('iframe');
     hide_iframe(ifr);
     ifr.setAttribute('src',  iframe_uri +
-                            '&callback=' + fname);
+                            '&callback=' + fname + transportstr);
     document.body.appendChild(ifr);
     function garbc(){
         if(ifr){
@@ -443,19 +436,13 @@ function comet_schedule_crossdomain(iframe_uri, comet_uri, user_callback){
         window[fname] = null;
         window[fname + '_uri'] = null;
     }
-    if(window.addEventListener){
-        document.addEventListener('unload', garbc, false);
-        window.addEventListener('unload', garbc, false);
-    } else { // IE
-        document.attachEvent('onunload', garbc);
-        window.attachEvent('onunload', garbc);
-    }
+    comet_attach_unload_event(garbc);
     return garbc;
 }
 
 
 /********************************************************************/
-function ajax_crossdomain(iframe_uri, method, ajax_uri, user_callback, post_data){
+function comet_create_crossdomain_ajax(iframe_uri, ajax_uri, method, post_data, user_callback) {
     var i=0; while(window['ajc'+i] != undefined) i += 1;
     var fname = 'ajc' + i;
     var ifr;
@@ -494,4 +481,142 @@ function ajax_crossdomain(iframe_uri, method, ajax_uri, user_callback, post_data
 }
 
 
+
+
+/********************************************************************/
+/** various helpers **/
+/********************************************************************/
+function strip(str) {
+    return str.replace(/^\s*(.*?)\s*$/, "$1");
+    return(str);
+}
+
+function getURLParam(strParamName){
+    var strReturn = "";
+    var strHref = window.location.href;
+    if ( strHref.indexOf("?") > -1 ){
+        var strQueryString = strHref.substr(strHref.indexOf("?")).toLowerCase();
+        var aQueryString = strQueryString.split("&");
+            for ( var iParam = 0; iParam < aQueryString.length; iParam++ ){
+            if(aQueryString[iParam].indexOf(strParamName.toLowerCase() + "=") > -1 ){
+                var aParam = aQueryString[iParam].split("=");
+                strReturn = aParam[1];
+                break;
+            }
+        }
+    }
+    return unescape(strReturn);
+}
+
+
+function comet_log(arg){
+    arg = arg.substr(0, 512);
+    if (typeof window.console !== 'undefined') {
+      console.log(arg);
+    }
+    else if (typeof window.opera !== 'undefined') {
+      opera.postError(arg);
+    }else if (window['YAHOO'] && YAHOO.log){
+        YAHOO.log(arg, 'info');
+    }/*else
+        alert(arg);
+    */
+}
+
+
+function comet_raw_xhr() {
+    try { return new ActiveXObject('MSXML3.XMLHTTP'); } catch(e) {}
+    try { return new ActiveXObject('MSXML2.XMLHTTP.3.0'); } catch(e) {}
+    try { return new ActiveXObject('Msxml2.XMLHTTP'); } catch(e) {}
+    try { return new ActiveXObject('Microsoft.XMLHTTP'); } catch(e) {}
+    try { return new XMLHttpRequest(); } catch(e) {}
+    throw new Error('Could not find XMLHttpRequest or an alternative.');
+}
+
+function comet_create_xhr() {
+    var xhr = comet_raw_xhr();
+    // stolen from http://blog.mibbit.com/?p=143
+    function safeSet(k, v) {
+        try {
+            xhr.setRequestHeader(k, v);
+        } catch(e) {}
+    }
+
+    safeSet("User-Agent", null);
+    safeSet("Accept", null);
+    safeSet("Accept-Language", null);
+    safeSet("Content-Type", "M");
+    safeSet("Connection", "keep-alive");
+    safeSet("Keep-Alive", null);
+    return(xhr);
+}
+
+function comet_create_ajax(url, method, data, onreadystatechange, mimetype) {
+    var xhr = comet_create_xhr();
+    xhr.open(method, url, true);
+    if(data){
+        if(!mimetype)
+            mimetype = "application/x-www-form-urlencoded";
+        xhr.setRequestHeader("Content-type", mimetype);
+        xhr.setRequestHeader("Content-length", data.length);
+    }
+    if(onreadystatechange)
+        xhr.onreadystatechange = onreadystatechange;
+    xhr.send(data);
+    return(xhr);
+}
+
+
+load_kill_ifr = null;
+function  kill_load_bar() {
+    if (load_kill_ifr == null) {
+      load_kill_ifr = document.createElement('iframe');
+      hide_iframe(load_kill_ifr);
+    }
+    document.body.appendChild(this.load_kill_ifr);
+    document.body.removeChild(this.load_kill_ifr);
+}
+
+function comet_attach_unload_event(foo){
+    if(window.addEventListener){
+        document.addEventListener('unload', foo, false);
+        window.addEventListener('unload', foo, false);
+    } else { // IE
+        document.attachEvent('onunload', foo);
+        window.attachEvent('onunload', foo);
+    }
+}
+
+function extract_xss_domain(old_domain) {
+    var domain_pieces = old_domain.split('.');
+    if (domain_pieces.length === 4) {
+        var is_ip = !isNaN(Number(domain_pieces.join('')));
+        if (is_ip) {
+            return old_domain;
+        }
+    }
+    var new_domain = domain_pieces.slice(-2).join('.');
+    var colon = old_domain.split(':');
+    if(colon.length > 1)
+        return new_domain + ':' + colon[1];
+    return new_domain;
+}
+
+function encode_utf8( s )
+{
+    try{
+        return unescape( encodeURIComponent( s ) );
+    }catch(e){
+        return(s);
+    }
+}
+
+function decode_utf8( s )
+{
+    try{
+        return decodeURIComponent( escape( s ) );
+    }catch(e){
+        return(s);
+    }
+}
 

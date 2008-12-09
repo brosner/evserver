@@ -130,6 +130,8 @@ else:
 
 
 import __builtin__
+import glob
+import collections
 
 class Reloader:
     def __init__(self, die=False):
@@ -145,9 +147,10 @@ class Reloader:
             log.warning("Code has been changed in file %r. Quitting gracefully." % (self.toreload.keys()[0]))
             libevent.event_loopexit(None)
         else:
-            for fname, module in self.toreload.items():
-                log.warning("Reloading file %r, module %r" % (fname, module))
-                reload(module)
+            for fname, modules in self.toreload.items():
+                log.warning("Reloading file %r" % (fname))
+                for module in modules.keys():
+                    reload(module)
 
             fd, timeout = self.get_fd_timeout()
             event_schedule(fd, timeout, self.update)
@@ -157,13 +160,13 @@ class Reloader:
         the main point is that when, during new import, we know the file to import,
         we still don't know the module and module name.
         '''
-        cache = {} # 'file.py' -> <module>
+        cache = collections.defaultdict(lambda:{}) # 'file.py' -> <module>
         def add_file(pyc_file, module):
             fname = pyc_file.rpartition('.')[0] + '.py'
             if fname not in cache and os.access(fname, os.W_OK):
                 log.warning("watching file %r" % (fname))
                 self.fam.add_file(fname)
-            cache[fname] = module
+            cache[fname][module] = True
 
         def onchange(fname):
             self.toreload[fname] = cache[fname]
@@ -175,12 +178,18 @@ class Reloader:
             add_file(fname, module)
 
 
+        # preload stuff
+        list( glob.glob(os.path.join(os.path.dirname('/etc/passwd'), '*.py')) )
+
         # sorry about that, but I haven't found any better working solution
         self.orginal_import = __builtin__.__import__
-        def new_import(*args,**kwargs):
+        def new_import(*args, **kwargs):
             mod = self.orginal_import(*args, **kwargs)
             if mod and getattr(mod, '__file__', None):
                 add_file(mod.__file__, mod)
+                # quick hack for __init__ files. anyone has better idea?
+                if '__init__' in mod.__file__:
+                    add_file(os.path.join(os.path.dirname(mod.__file__), args[0].rpartition('.')[2] + '.py'), mod)
             return mod
         __builtin__.__import__ = new_import
         return

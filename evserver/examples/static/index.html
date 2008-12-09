@@ -1,10 +1,8 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 
-    <script src="/static/prototype.js" type="text/javascript"></script>
     <script src="/static/utils.js" type="text/javascript"></script>
 
-    <script src="/static/comet_utils.js" type="text/javascript"></script>
     <script src="/static/comet.js" type="text/javascript"></script>
 
 
@@ -188,6 +186,16 @@
             document.getElementById('n-' + t +'-'+transport).innerHTML= result;
     }
 
+    function create_comet(url, user_callback, transport_local){
+        return comet_crossdomain_connection('./static/crosscomet.html', url, user_callback, transport_local);
+        return comet_connection(url, user_callback_o, transport_local);
+    }
+
+    function create_ajax(url, method, data, onreadystatechange, mimetype) {
+        return comet_create_crossdomain_ajax('./static/crossajax.html', url, method, data, onreadystatechange);
+        return comet_create_ajax(url, method, data, onreadystatechange, mimetype);
+    }
+
 
 
     function stage_1(gtransport){
@@ -315,7 +323,7 @@
                     stage += 1;
                 }
             }
-            transportclose = comet_connection('/comet', get_callback(), gtransport);
+            transportclose = create_comet('/comet', get_callback(), gtransport);
         }
 
     function stage_2(transport){
@@ -341,7 +349,7 @@
                 uid = data;
                 log(transport +': uid=' + uid);
                 t0 = (new Date()).getTime();
-                post_ajax('/echowrite?uid=' + escape(uid), 'TEST' + (stage+1));
+                create_ajax('/echowrite?uid=' + escape(uid), 'POST', 'TEST' + (stage+1));
                 break;
             case 2:
                 set_result(transport, 'snd',  true);
@@ -374,13 +382,13 @@
                         set_result(transport, 'rtt',  t_min + '/' + avg.toFixed(0) + '/' + t_max + ' ms');
                         log(transport + ' round trip times in ms: ' + s);
                     }
-                    post_ajax('/echowrite?uid=' + escape(uid), 'TEST' + (stage+1));
+                    create_ajax('/echowrite?uid=' + escape(uid),'POST', 'TEST' + (stage+1));
                 }
                 break;
             case 3:
                 // don't even try for IE
                 if(transport != 'htmlfile')
-                    transportclose[transport+'2'] = comet_connection('/echoread', callback, transport);
+                    transportclose[transport+'2'] = create_comet('/echoread', callback, transport);
                 else{
                     set_result(transport, 'mul',  false);
                     transportclose[transport]();
@@ -399,8 +407,8 @@
                 uid2 = data;
                 m1 = '' + Math.random();
                 m2 = '' + Math.random();
-                post_ajax('/echowrite?uid=' + escape(uid), m1);
-                post_ajax('/echowrite?uid=' + escape(uid2), m2);
+                create_ajax('/echowrite?uid=' + escape(uid), 'POST', m1);
+                create_ajax('/echowrite?uid=' + escape(uid2), 'POST', m2);
                 timeoutId = window.setTimeout(function (){
                             set_result(transport, 'mul',  false);
                             document.getElementById('but-' + transport).disabled = false;
@@ -439,7 +447,7 @@
            }
            stage += 1;
         }
-        transportclose[transport] = comet_connection('/echoread', callback, transport);
+        transportclose[transport] = create_comet('/echoread', callback, transport);
     }
 
     var tested_transports = ['iframe', 'htmlfile', 'xhrstream','sse', 'longpoll'];
@@ -455,7 +463,7 @@
             var transport = tested_transports[i];
             document.getElementById('but-' + transport).disabled = true;
             try{
-            stage_1(transport);
+                stage_1(transport);
             }catch(e){log(transport + ': exception ' + e);}
         }
     }

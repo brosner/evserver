@@ -59,42 +59,23 @@ class IFrameTransport(Transport):
         self.headers['Content-Type'] = 'text/html; charset=utf-8'
         self.headers['Refresh'] = '3000'
         Transport.__init__(self, *args, **kwargs)
-        self.alert = "iframe_log('iframe: ' + e.message + ' ' + e);"
+        self.alert = "llog('iframe: ' + e.message + ' ' + e);"
 
     initial_data = '''
         <html>
         <head>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-            <script type="text/javascript" charset="utf-8">
-            function extract_xss_domain(old_domain) {
-                var domain_pieces = old_domain.split('.');
-                if (domain_pieces.length === 4) {
-                    var is_ip = !isNaN(Number(domain_pieces.join('')));
-                    if (is_ip) {
-                       return old_domain;
-                    }
-                }
-                var new_domain = domain_pieces.slice(-2).join('.');
-                var colon = old_domain.split(':');
-                if(colon.length > 1)
-                    return new_domain + ':' + colon[1];
-                return new_domain;
-            }
+            <script type="text/javascript" src="./static/comet.js"></script>
 
-            function iframe_log(arg){
-                arg = arg.substr(0, 512);
-                if (typeof window.console !== 'undefined') {
-                    console.log(arg);
+            <script type="text/javascript" charset="utf-8">
+                var newdomain = extract_xss_domain(document.domain);
+                if(document.domain != newdomain)
+                    document.domain = newdomain;
+                function llog(txt){
+                    if(comet_log)
+                        comet_log(txt);
                 }
-                else if (typeof window.opera !== 'undefined') {
-                    opera.postError(arg);
-                }else if (window['YAHOO'] && YAHOO.log){
-                    YAHOO.log(arg, 'info');
-                }
-            }
-            if(document.domain != extract_xss_domain(document.domain))
-                document.domain = extract_xss_domain(document.domain);
-          </script>
+            </script>
         </head>
         <body onLoad="try{parent.%(callback)s_reconnect();}catch(e){%(alert)s}">
     ''' + ('<span></span>' * 80)
