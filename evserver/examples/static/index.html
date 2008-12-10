@@ -37,7 +37,12 @@
         Long polling transport is here only for testing purposes. It's not actually a Comet transport, in the sense that many connections are needed
         to send data.
     </p>
-    <h3>Current domain tests</h3>
+    <h3>
+    <div id=header-domain style="float:left;vertical-align:top"></div><span style="width:10px">&nbsp;</span>
+            <button onclick="change_domain_settings();" style="vertical-align:bottom">change</button>
+    </h3>
+    <br style="clear:both"/><br />
+
     <button id=but-all onclick="run_all_tests(this);">test all transports</button>
     <table border=1>
         <tr><td></td>
@@ -165,6 +170,18 @@
     <pre id="logger" class="box"></pre>
 <script>
 <!--
+    var cross_domain = true;
+
+    function change_domain_settings(){
+        cross_domain = !cross_domain;
+        if(!cross_domain)
+            document.getElementById('header-domain').innerHTML = 'Current domain tests';
+        else
+            document.getElementById('header-domain').innerHTML = 'Cross-domain tests (comet.'+document.domain+')';
+    }
+
+    change_domain_settings();
+
     // highlight automatic transport
     try{
         var o = document.getElementById('header-' + transport_global);
@@ -190,12 +207,14 @@
     }
 
     function create_comet(url, user_callback, transport_local){
-        return comet_crossdomain_connection('http://comet.majek.net/static/crosscomet.html', url, user_callback, transport_local);
-        return comet_connection(url, user_callback_o, transport_local);
+        if(cross_domain)
+            return comet_crossdomain_connection('http://comet.'+document.domain+'/static/crosscomet.html', url, user_callback, transport_local);
+        return comet_connection(url, user_callback, transport_local);
     }
 
     function create_ajax(url, method, data, onreadystatechange, mimetype) {
-        return comet_create_crossdomain_ajax('http://comet.majek.net/static/crossajax.html', url, method, data, onreadystatechange);
+        if(cross_domain)
+            return comet_create_crossdomain_ajax('http://comet.'+document.domain+'/static/crossajax.html', url, method, data, onreadystatechange);
         return comet_create_ajax(url, method, data, onreadystatechange, mimetype);
     }
 

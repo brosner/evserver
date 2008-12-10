@@ -93,6 +93,8 @@ function schedule_connection_longpoll(url, callback, server_reconnect) {
             }catch(e){};
         }
         var onreadystatechange = function() {
+                if(!xhr)
+                    return;
                 if(xhr.readyState==4){
                     if(xhr.status==200){
                         eid += 1;
