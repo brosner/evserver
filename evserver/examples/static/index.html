@@ -5,6 +5,9 @@
 
     <script src="/static/comet.js" type="text/javascript"></script>
 
+    <script type="text/javascript" charset="utf-8">
+    document.domain = extract_xss_domain(document.domain);
+    </script>
 
     <style type="text/css">
         .box    {color:black;
@@ -187,12 +190,12 @@
     }
 
     function create_comet(url, user_callback, transport_local){
-        return comet_crossdomain_connection('./static/crosscomet.html', url, user_callback, transport_local);
+        return comet_crossdomain_connection('http://comet.majek.net/static/crosscomet.html', url, user_callback, transport_local);
         return comet_connection(url, user_callback_o, transport_local);
     }
 
     function create_ajax(url, method, data, onreadystatechange, mimetype) {
-        return comet_create_crossdomain_ajax('./static/crossajax.html', url, method, data, onreadystatechange);
+        return comet_create_crossdomain_ajax('http://comet.majek.net/static/crossajax.html', url, method, data, onreadystatechange);
         return comet_create_ajax(url, method, data, onreadystatechange, mimetype);
     }
 

@@ -404,7 +404,6 @@ function comet_crossdomain_connection(iframe_uri, comet_uri, user_callback, tran
         transportstr = '&transport=' + transport;
 
     comet_log('cometcrossdomain: started');
-
     window[fname] = user_callback;
     window[fname + '_uri'] = comet_uri;
 
@@ -425,15 +424,15 @@ function comet_crossdomain_connection(iframe_uri, comet_uri, user_callback, tran
                 if(ifr.contentWindow)
                     doc = ifr.contentWindow.document;
             }
-            if(doc && doc.comet_garbage){
+            try{
+            if(doc && doc.comet_garbage)
                 doc.comet_garbage();
-            }
+            }catch(e){};
             document.body.removeChild(ifr);
             delete(ifr);
             ifr=null;
         }
-
-        window[fname] = null;
+        window[fname] = function(){};
         window[fname + '_uri'] = null;
     }
     comet_attach_unload_event(garbc);
@@ -442,34 +441,34 @@ function comet_crossdomain_connection(iframe_uri, comet_uri, user_callback, tran
 
 
 /********************************************************************/
-function comet_create_crossdomain_ajax(iframe_uri, ajax_uri, method, post_data, user_callback) {
+function comet_create_crossdomain_ajax(iframe_uri, ajax_uri, method, post_data, user_callback, mimetype) {
+    var queue_key = escape(iframe_uri) + '_queue';
+    var garbc_key = escape(iframe_uri) + '_garbc';
+    var push_key  = escape(iframe_uri) + '_push';
+    if(window[queue_key] == undefined){
+        window[queue_key] = [];
+        window[push_key] = function(){};
+    }
+
+    var v = [ajax_uri, method, post_data, user_callback, mimetype];
+    window[queue_key] = ([v]).concat(window[queue_key]);
+    window[push_key]();
+
+    if(window[garbc_key] == undefined) {
+        window[garbc_key] = comet_create_crossdomain_ajax_iframe(iframe_uri);
+    }
+}
+
+function comet_create_crossdomain_ajax_iframe(iframe_uri) {
     var i=0; while(window['ajc'+i] != undefined) i += 1;
     var fname = 'ajc' + i;
     var ifr;
+    window[fname] = escape(iframe_uri);
+    var queue_key = fname + '_data';
+
 
     if(iframe_uri.indexOf('?') == -1)
         iframe_uri = iframe_uri + '?a=' + Math.random()
-
-    function gc(){
-        document.body.removeChild(ifr);
-        delete(ifr);
-        ifr=null;
-        window[fname] = null;
-        window[fname + '_method']    = null;
-        window[fname + '_ajax_uri']  = null;
-        window[fname + '_post_data'] = null;
-    }
-
-    function callback(o){
-        if(user_callback)
-            user_callback(o);
-        gc();
-    }
-
-    window[fname] = callback;
-    window[fname + '_method']    = method;
-    window[fname + '_ajax_uri']  = ajax_uri;
-    window[fname + '_post_data'] = post_data;
 
     ifr = document.createElement('iframe');
     hide_iframe(ifr);
@@ -477,7 +476,17 @@ function comet_create_crossdomain_ajax(iframe_uri, ajax_uri, method, post_data, 
                             '&callback=' + fname);
     document.body.appendChild(ifr);
     kill_load_bar();
-    return gc;
+
+    var garbc = function(){
+        if(ifr){
+            document.body.removeChild(ifr);
+            delete(ifr);
+            ifr=null;
+        }
+        window[fname] = null;
+    }
+    comet_attach_unload_event(garbc);
+    return garbc;
 }
 
 

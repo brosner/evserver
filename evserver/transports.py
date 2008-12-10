@@ -59,7 +59,7 @@ class IFrameTransport(Transport):
         self.headers['Content-Type'] = 'text/html; charset=utf-8'
         self.headers['Refresh'] = '3000'
         Transport.__init__(self, *args, **kwargs)
-        self.alert = "llog('iframe: ' + e.message + ' ' + e);"
+        self.alert = "try{comet_log('iframe: ' + e.message + ' ' + e);}catch(e){}"
 
     initial_data = '''
         <html>
@@ -68,13 +68,7 @@ class IFrameTransport(Transport):
             <script type="text/javascript" src="./static/comet.js"></script>
 
             <script type="text/javascript" charset="utf-8">
-                var newdomain = extract_xss_domain(document.domain);
-                if(document.domain != newdomain)
-                    document.domain = newdomain;
-                function llog(txt){
-                    if(comet_log)
-                        comet_log(txt);
-                }
+                document.domain = extract_xss_domain(document.domain);
             </script>
         </head>
         <body onLoad="try{parent.%(callback)s_reconnect();}catch(e){%(alert)s}">

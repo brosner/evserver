@@ -3,38 +3,59 @@
     <script type="text/javascript" src="./comet.js"></script>
 
     <script type="text/javascript" charset="utf-8">
-    var newdomain = extract_xss_domain(document.domain);
-    if(document.domain != newdomain)
-        document.domain = newdomain;
+    document.domain = extract_xss_domain(document.domain);
     </script>
 </head>
 <body>
     <script type="text/javascript" charset="utf-8">
-        callback = getURLParam('callback');
-        var xhr = null;
-        function x(){
-            var user_callback = parent[callback];
-            var post_data     = parent[callback + '_post_data'];
-            var ajax_method   = parent[callback + '_method'];
-            var ajax_uri      = parent[callback + '_ajax_uri'];
-            var onreadystatechange = function (){
-                if(!xhr)
-                    return;
-                if(xhr.readyState != 4)
-                    return;
-                if(user_callback){
-                    /* avoid passing xhr object directly to parent iframe */
-                    var x = {};
-                    x.readyState    = xhr.readyState;
-                    x.responseText  = xhr.responseText;
-                    x.responseBody  = xhr.responseBody;
-                    x.status        = xhr.status;
-                    x.statusText    = xhr.statusText;
-                    user_callback(x);
-                }
-            };
-            xhr = comet_create_ajax(ajax_uri, ajax_method, post_data, onreadystatechange);
+        var callback = getURLParam('callback');
+        var key = parent[callback];
+        var queue_key = key + '_queue';
+        var garbc_key = key + '_garbc';
+        var push_key  = key + '_push';
 
+        var empty_queue = null;
+        parent[push_key] = function(){
+            if(empty_queue)
+                empty_queue();
+        }
+
+        empty_queue = function(){
+            while(true){
+                var items = parent[queue_key].pop();
+                if(!items)
+                    break;
+                var closure = function (){
+                    var ajax_uri = items[0];
+                    var method = items[1];
+                    var post_data = items[2];
+                    var user_callback = items[3];
+                    var mimetype = items[4];
+                    var xhr = null;
+                    var onreadystatechange = function (){
+                        if(!xhr)
+                            return;
+                        if(xhr.readyState != 4)
+                            return;
+                        if(user_callback){
+                            /* avoid passing xhr object directly to parent iframe */
+                            var x = {};
+                            x.readyState    = xhr.readyState;
+                            x.responseText  = xhr.responseText;
+                            x.responseBody  = xhr.responseBody;
+                            x.status        = xhr.status;
+                            x.statusText    = xhr.statusText;
+                            user_callback(x);
+                        }
+                    };
+                    xhr = comet_create_ajax(ajax_uri, method, post_data, onreadystatechange, mimetype);
+                }
+                closure();
+            }
+        }
+        empty_queue();
+
+            /*
             function gc2(){
                 if(xhr){
                     xhr.onreadystatechange=function () {};
@@ -46,8 +67,7 @@
             comet_attach_unload_event(gc2);
             document.comet_garbage = gc2;
             window.comet_garbage   = gc2;
-        }
-        x();
+            */
     </script>
 </body>
 </html>

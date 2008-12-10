@@ -3,14 +3,14 @@
     <script type="text/javascript" src="./comet.js"></script>
 
     <script type="text/javascript" charset="utf-8">
-    var newdomain = extract_xss_domain(document.domain);
-    if(document.domain != newdomain)
-        document.domain = newdomain;
+    document.domain = extract_xss_domain(document.domain);
     </script>
 </head>
 <body>
     <script type="text/javascript" charset="utf-8">
+        document.domain = extract_xss_domain(document.domain);
         var callback = getURLParam('callback');
+
         var transport = getURLParam('transport');
         var gc = null;
         function cb(data){
@@ -33,7 +33,7 @@
             document.comet_garbage = gc2;
             window.comet_garbage   = gc2;
         }catch(e){
-            alert('got data but cant pass it from iframe. callback:' + callback + ' domain:' +document.domain + ' error:' + e.message);
+            alert('got data but cant pass it from iframe. callback:' + callback + ' domain:>' +document.domain + '< error:' + e.message);
         }
 
     </script>

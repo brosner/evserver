@@ -184,13 +184,16 @@ class Reloader:
         # sorry about that, but I haven't found any better working solution
         self.orginal_import = __builtin__.__import__
         def new_import(*args, **kwargs):
-            mod = self.orginal_import(*args, **kwargs)
-            if mod and getattr(mod, '__file__', None):
-                add_file(mod.__file__, mod)
-                # quick hack for __init__ files. anyone has better idea?
-                if '__init__' in mod.__file__:
-                    add_file(os.path.join(os.path.dirname(mod.__file__), args[0].rpartition('.')[2] + '.py'), mod)
-            return mod
+            omod = self.orginal_import(*args, **kwargs)
+            try:
+                mod = omod
+                for comp in args[0].split('.')[1:]:
+                    mod = getattr(mod, comp)
+                if mod and getattr(mod, '__file__', None):
+                    add_file(mod.__file__, mod)
+            except AttributeError:
+                pass
+            return omod
         __builtin__.__import__ = new_import
         return
 
