@@ -26,7 +26,6 @@ urls = (
 class staticfiles:
     def GET(self, filename='index.html'):
         path = resource_filename(__name__, os.path.join('static',filename))
-        log.error(path)
         #path = os.path.join('static',filename)
         if not os.access(path, os.R_OK):
             web.notfound()
