@@ -167,6 +167,7 @@ transports = {
     'sse':                  SSETransport,
     'xhr_multipart':        XHRMultipartTransport,
     'xhr_stream':           XHRStreamTransport,
+    'xhrstream':            XHRStreamTransport,
     'xhr':                  XHRStreamTransport,
 }
 

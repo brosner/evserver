@@ -183,7 +183,7 @@ class cometwrite:
 class cometread:
     def GET(self):
         lweb = web
-        environ = web.ctx.environ # must cache it, becouse it's global!
+        environ = web.ctx.environ # must cache it, because it's global!
         i = web.input(transport='iframe', callback='c')
         if i.transport == 'longpoll':
             return cometread_longpoll().GET()
@@ -256,5 +256,18 @@ try:
 except AttributeError:
     # webpy 0.2
     application = web.wsgifunc(web.webpyfunc(urls, globals()))
+
+
+
+
+def simplest_application(environ, start_response):
+    t = transports.get_transport('xhrstream')
+    start_response('200 OK', t.get_headers())
+    def iterator():
+        yield t.start()
+        yield t.write('fist message!')
+        yield t.write('second message!')
+        yield t.write('third message!')
+    return iterator()
 
 

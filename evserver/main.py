@@ -221,6 +221,7 @@ def main(args):
             log.error('Psyco import failed.')
 
 
+    log.info("Process pid=%i" % (os.getpid() ))
     log.info("Running with verbosity %i (>=%s)" % (verbosity, logging.getLevelName(verbosity)))
     log.info("Framework=%r, Main dir=%r, args=%r" % (options.framework, os.getcwd(), args))
     libeventbinary, libeventversion = find_libevent_binary(options.libeventbinary)
