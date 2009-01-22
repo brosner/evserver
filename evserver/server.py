@@ -12,7 +12,7 @@ except (AttributeError, ImportError):
     raise Exception("**** libevent ctypes bindings 'ctypes_event.py' are broken - probably wrong version of binary ****\n"+
                     "                currently, libevent.so is loaded from %r \n" %(ctypes.libeventbinary,)+
                     "                try to specify different 'libevent.so' using '--libevent </path/to/libevent.so> \n"+
-                    "                if that fails, try to create new ctypes bindings for libevent using 'make ctypes'")
+                    "                if that fails, try to create new ctypes bindings for libevent using 'make bindings'")
 
 
 import traceback

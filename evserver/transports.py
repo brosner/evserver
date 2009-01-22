@@ -1,4 +1,5 @@
-import json
+
+import others.json
 
 import os, os.path, logging
 log = logging.getLogger(os.path.basename(__file__))
