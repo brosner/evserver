@@ -16,12 +16,12 @@ os.chdir( resource_filename(__name__, '') )
 modulename = 'ctypes_event_%s' % v
 try:
     libevent = __import__(modulename)
-except (AttributeError, ImportError):
+except (AttributeError, ImportError), e:
     raise Exception("**** libevent ctypes bindings %r are broken - probably wrong version of binary ****\n" % (modulename,)+
                     "                currently, libevent.so is loaded from %r \n" %(ctypes.libeventbinary,)+
                     "                try to specify different 'libevent.so' using '--libevent </path/to/libevent.so> \n"+
                     "                if that fails, try to create new ctypes bindings for libevent using 'make bindings'\n"+
-                    "                Tried to load the bindings from directory %r " % (os.getcwd(),) )
+                    "                Tried to load the bindings from directory %r\n" % (os.getcwd(),) + str(e))
 os.chdir( oldcwd )
 
 
