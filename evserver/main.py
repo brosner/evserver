@@ -224,12 +224,18 @@ def main(args):
     log.info("Process pid=%i" % (os.getpid() ))
     log.info("Running with verbosity %i (>=%s)" % (verbosity, logging.getLevelName(verbosity)))
     log.info("Framework=%r, Main dir=%r, args=%r" % (options.framework, os.getcwd(), args))
+
+    oldcwd = os.getcwd()
+    os.chdir( resource_filename(__name__, '') )
+
     libeventbinary, libeventversion = find_libevent_binary(options.libeventbinary)
     ctypes.libeventbinary = libeventbinary
     ctypes.libeventbinary_version = libeventversion
     import server
 
     log.info("libevent loaded from %r, ver %r" % (libeventbinary, libeventversion,))
+    os.chdir(oldcwd)
+
     server.main_init()
 
     if not options.nodebug:
