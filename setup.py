@@ -37,7 +37,7 @@ setup(
     package_dir = {'':"."},
 
     entry_points = {
-        'console_scripts': ['evserver = evserver.evserver:egg_entry_point'],
+        'console_scripts': ['evserver = evserver.main:egg_entry_point'],
     },
     distclass = MyDist,
 )
