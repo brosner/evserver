@@ -3,16 +3,26 @@
 
 import ctypes
 import sys
+import os
 import signal
 import utils
+from pkg_resources import resource_filename
+
+v = ctypes.libeventbinary_version.replace('-','_').replace('.','_')
+
+oldcwd = os.getcwd()
+os.chdir( resource_filename(__name__, '') )
+
+modulename = 'ctypes_event_%s' % v
 try:
-    v = ctypes.libeventbinary_version.replace('-','_').replace('.','_')
-    libevent = __import__('ctypes_event_%s' % v)
+    libevent = __import__(modulename)
 except (AttributeError, ImportError):
-    raise Exception("**** libevent ctypes bindings 'ctypes_event.py' are broken - probably wrong version of binary ****\n"+
+    raise Exception("**** libevent ctypes bindings %r are broken - probably wrong version of binary ****\n" % (modulename,)+
                     "                currently, libevent.so is loaded from %r \n" %(ctypes.libeventbinary,)+
                     "                try to specify different 'libevent.so' using '--libevent </path/to/libevent.so> \n"+
-                    "                if that fails, try to create new ctypes bindings for libevent using 'make bindings'")
+                    "                if that fails, try to create new ctypes bindings for libevent using 'make bindings'\n"+
+                    "                Tried to load the bindings from directory %r " % (os.getcwd(),) )
+os.chdir( oldcwd )
 
 
 import traceback

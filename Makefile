@@ -18,10 +18,11 @@ endif
 
 
 egg: eggs
-eggs: fullclean libeventdll
+eggs: clean libeventdll
 	$(PYTHON) setup.py bdist_egg
 
-all:	clean bindings eggs
+all:	eggs
+
 distclean: fullclean
 mrproper: fullclean
 fullclean: clean
