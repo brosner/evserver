@@ -84,6 +84,14 @@ def get_libevent_version(binary):
 '''
 
 def find_libevent_binary(userpath):
+    def test_location(dllname):
+        try:
+            a = ctypes.CDLL(dllname)
+            a.close()
+            return True
+        except OSError:
+            return False
+
     def getpath(userpath):
         if userpath:
             if os.path.isdir(userpath):
@@ -92,41 +100,30 @@ def find_libevent_binary(userpath):
                 return os.path.realpath(os.path.expanduser(userpath))
             raise Exception("%r is not a valid path to %s" % (userpath,libeventbin))
 
-        if os.path.exists('./%s' % libeventbin):
-            return './%s' % libeventbin
+        dllnames = [
+            resource_filename(__name__, libeventbin),
+            './%s' % libeventbin,
+            '%s' % libeventbin,
+            ctypes.util.find_library('event') or '_invalid_',
+            '/usr/local/lib/%s' % libeventbin,
+            'event',
+        ]
+        for dllname in dllnames:
+            if test_location(dllname):
+                return dllname
 
-        if os.path.exists(resource_filename(__name__, libeventbin)):
-            return resource_filename(__name__, libeventbin)
+        raise OSError
 
-        try:
-            a = ctypes.CDLL(libeventbin)
-            a.close()
-            return libeventbin
-        except OSError:
-            pass
-
-        if os.path.exists('/usr/local/lib/%s' % libeventbin):
-            return '/usr/local/lib/%s' % libeventbin
-
-        try:
-            so = ctypes.util.find_library('event')
-            a = ctypes.CDLL(so)
-            a.close()
-            return so
-        except OSError:
-            pass
-
-        return libeventbin
-
-    so = getpath(userpath)
     try:
+        so = getpath(userpath)
         ver = get_libevent_version(so)
         return so, ver
     except OSError:
-        raise Exception("**** %r not found or can't be loaded ****\n" % (libeventbin)+
-                        "                try setting the location using --libevent </path/to/the/%s> flag\n" % (libeventbin)+
-                        "                or use 'LD_LIBRARY_PATH=\"../pathtolibeventsobinaries\" %s ...'.\n" % (sys.argv[0]) +
-                        "                you can also try to install libevent in current directory %r or /usr/local/lib" % (os.getcwd()))
+        log.critical("**** %r not found or can't be loaded ****\n" % (libeventbin)+
+                     "                try setting the location using --libevent </path/to/the/%s> flag\n" % (libeventbin)+
+                     "                or use 'LD_LIBRARY_PATH=\"../pathtolibeventsobinaries\" %s ...'.\n" % (sys.argv[0]) +
+                     "                you can also try to install libevent in current directory %r or /usr/local/lib" % (os.getcwd()))
+        os.abort()
 
 
 
@@ -225,16 +222,16 @@ def main(args):
     log.info("Running with verbosity %i (>=%s)" % (verbosity, logging.getLevelName(verbosity)))
     log.info("Framework=%r, Main dir=%r, args=%r" % (options.framework, os.getcwd(), args))
 
-    oldcwd = os.getcwd()
-    os.chdir( resource_filename(__name__, '') )
 
+    old_cwd = os.getcwd()
+    os.chdir(resource_filename(__name__, ''))
     libeventbinary, libeventversion = find_libevent_binary(options.libeventbinary)
     ctypes.libeventbinary = libeventbinary
     ctypes.libeventbinary_version = libeventversion
     import server
+    os.chdir(old_cwd)
 
     log.info("libevent loaded from %r, ver %r" % (libeventbinary, libeventversion,))
-    os.chdir(oldcwd)
 
     server.main_init()
 

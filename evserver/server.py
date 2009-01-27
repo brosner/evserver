@@ -3,15 +3,20 @@
 
 import ctypes
 import sys
-import os
 import signal
 import utils
+import gc
+import os, os.path, logging
+import traceback
+import time
+import StringIO
+import datetime
+from functools import wraps
 from pkg_resources import resource_filename
 
-v = ctypes.libeventbinary_version.replace('-','_').replace('.','_')
+log = logging.getLogger(os.path.basename(__file__))
 
-oldcwd = os.getcwd()
-os.chdir( os.path.join(resource_filename(__name__, ''), '..')  )
+v = ctypes.libeventbinary_version.replace('-','_').replace('.','_')
 
 modulename = 'evserver.ctypes_event_%s' % v
 try:
@@ -23,24 +28,15 @@ try:
         return mod
     libevent = my_import(modulename)
 except (AttributeError, ImportError), e:
-    raise Exception("**** libevent ctypes bindings %r are broken - probably wrong version of binary ****\n" % (modulename,)+
-                    "                currently, libevent.so is loaded from %r \n" %(ctypes.libeventbinary,)+
-                    "                try to specify different 'libevent.so' using '--libevent </path/to/libevent.so> \n"+
-                    "                if that fails, try to create new ctypes bindings for libevent using 'make bindings'\n"+
-                    "                Tried to load the bindings from directory: %r\nError message: %r\n" % (os.getcwd(), str(e)) )
-os.chdir( oldcwd )
+    log.critical("**** libevent ctypes bindings %r are broken - probably wrong version of binary ****\n" % (modulename,)+
+                 "                currently, libevent.so is loaded from %r \n" %(ctypes.libeventbinary,)+
+                 "                try to specify different 'libevent.so' using '--libevent </path/to/libevent.so> \n"+
+                 "                if that fails, try to create new ctypes bindings for libevent using 'make bindings'\n"+
+                 "                Tried to load the bindings from directory: %r\nError message: %r\n" % (os.getcwd(), str(e)) )
+    os.abort()
 
 
-import traceback
-import time
-from functools import wraps
-import StringIO
-import datetime
 import request
-import gc
-import os, os.path, logging
-
-log = logging.getLogger(os.path.basename(__file__))
 
 
 
