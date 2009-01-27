@@ -11,17 +11,23 @@ from pkg_resources import resource_filename
 v = ctypes.libeventbinary_version.replace('-','_').replace('.','_')
 
 oldcwd = os.getcwd()
-os.chdir( resource_filename(__name__, '') )
+os.chdir( os.path.join(resource_filename(__name__, ''), '..')  )
 
-modulename = 'ctypes_event_%s' % v
+modulename = 'evserver.ctypes_event_%s' % v
 try:
-    libevent = __import__(modulename)
+    def my_import(name):
+        mod = __import__(name)
+        components = name.split('.')
+        for comp in components[1:]:
+            mod = getattr(mod, comp)
+        return mod
+    libevent = my_import(modulename)
 except (AttributeError, ImportError), e:
     raise Exception("**** libevent ctypes bindings %r are broken - probably wrong version of binary ****\n" % (modulename,)+
                     "                currently, libevent.so is loaded from %r \n" %(ctypes.libeventbinary,)+
                     "                try to specify different 'libevent.so' using '--libevent </path/to/libevent.so> \n"+
                     "                if that fails, try to create new ctypes bindings for libevent using 'make bindings'\n"+
-                    "                Tried to load the bindings from directory %r\n" % (os.getcwd(),) + str(e))
+                    "                Tried to load the bindings from directory: %r\nError message: %r\n" % (os.getcwd(), str(e)) )
 os.chdir( oldcwd )
 
 
