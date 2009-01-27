@@ -14,7 +14,6 @@ import os, os.path, logging
 
 log = logging.getLogger(os.path.basename(__file__))
 
-
 urls = (
     '/static/([^/]+)', 'staticfiles',
     '/', 'staticfiles',
@@ -38,9 +37,8 @@ class staticfiles:
             web.header('Content-Type', mt )
         f = open(path)
         data = f.read()
-        web.output(data)
         f.close()
-        return
+        return data
 
 
 class comet:
@@ -49,7 +47,7 @@ class comet:
         i = web.input(transport='iframe', callback='c')
         if i.transport == 'longpoll':
             return comet_longpoll().GET()
-        t = transports.get_transport(i.transport, i.callback)
+        t = transports.get_transport(i.transport.encode('utf-8'), i.callback.encode('utf-8'))
         for k, v in t.get_headers():
             web.header(k, v)
 
@@ -92,7 +90,7 @@ class comet:
             except GeneratorExit:
                 pass
             os.close(fd)
-        web.ctx.output = iterator()
+        return iterator()
 
 class comet_longpoll:
     def GET(self):
@@ -160,7 +158,7 @@ class comet_longpoll:
             except GeneratorExit:
                 pass
             os.close(fd)
-        web.ctx.output = iterator()
+        return iterator()
 
 
 
@@ -176,8 +174,7 @@ class cometwrite:
         fd = os.open(path, os.O_WRONLY | os.O_NONBLOCK)
         os.write(fd, web.data() )
         os.close(fd)
-        web.output('ok')
-        return
+        return 'ok'
 
 
 class cometread:
@@ -215,7 +212,7 @@ class cometread:
             except GeneratorExit:
                 pass
             os.unlink(fname)
-        web.ctx.output = iterator()
+        return iterator()
 
 class cometread_longpoll:
     def GET(self):
@@ -246,7 +243,7 @@ class cometread_longpoll:
                 except GeneratorExit:
                     pass
             os.unlink(fname)
-        web.ctx.output = iterator()
+        return iterator()
 
 
 # from http://code.google.com/p/modwsgi/wiki/IntegrationWithWebPy

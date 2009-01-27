@@ -171,13 +171,14 @@
 <script>
 <!--
     var cross_domain = true;
+    var cross_domain_domain = 'comet.' + ('' + document.location).split('/')[2];
 
     function change_domain_settings(){
         cross_domain = !cross_domain;
         if(!cross_domain)
             document.getElementById('header-domain').innerHTML = 'Current domain tests';
         else
-            document.getElementById('header-domain').innerHTML = 'Cross-domain tests (comet.'+document.domain+')';
+            document.getElementById('header-domain').innerHTML = 'Cross-domain tests ('+cross_domain_domain+')';
     }
 
     change_domain_settings();
@@ -208,7 +209,7 @@
 
     function create_comet(url, user_callback, transport_local){
         if(cross_domain)
-            return comet_crossdomain_connection('http://comet.'+document.domain+'/static/crosscomet.html', url, user_callback, transport_local);
+            return comet_crossdomain_connection('http://'+cross_domain_domain+'/static/crosscomet.html', url, user_callback, transport_local);
         return comet_connection(url, user_callback, transport_local);
     }
 

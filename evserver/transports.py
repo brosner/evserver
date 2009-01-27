@@ -1,5 +1,5 @@
 
-import evserver.other.json
+import evserver.other.json as json
 
 import os, os.path, logging
 log = logging.getLogger(os.path.basename(__file__))
