@@ -215,7 +215,7 @@
 
     function create_ajax(url, method, data, onreadystatechange, mimetype) {
         if(cross_domain)
-            return comet_create_crossdomain_ajax('http://comet.'+document.domain+'/static/crossajax.html', url, method, data, onreadystatechange);
+            return comet_create_crossdomain_ajax('http://comet.'+cross_domain_domain+'/static/crossajax.html', url, method, data, onreadystatechange);
         return comet_create_ajax(url, method, data, onreadystatechange, mimetype);
     }
 

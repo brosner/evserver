@@ -1,7 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import evserver.transports
+try:
+    import transports
+except ImportError:
+    import evserver.transports as transports
+
 import os
 
 import web
