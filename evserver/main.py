@@ -18,6 +18,7 @@ import time
 import datetime
 import platform
 from pkg_resources import resource_filename
+import socket
 
 
 log = logging.getLogger(os.path.basename(__file__))
@@ -40,30 +41,14 @@ def wsgi_django():
     log.info("Running Django. DJANGO_SETTINGS_MODULE=%s, DEBUG=%s" % (os.getenv('DJANGO_SETTINGS_MODULE',''), settings.DEBUG))
     return django_wsgi.WSGIHandler()
 
-def clock_demo(environ, start_response):
-    start_response("200 OK", [('Content-type','text/plain')])
-    # whatever empty file, we just want to receive a timeout
-    fname = '/tmp/fifo'
-    try:
-        os.mkfifo(fname)
-    except OSError:
-        pass
-    fd = os.open(fname, os.O_RDONLY | os.O_NONBLOCK)
-    os.read(fd, 65535)
-    try:
-        while True:
-            yield environ['x-wsgiorg.fdevent.readable'](fd, 1.0)
-            yield "%s\n" % (datetime.datetime.now(),)
-    except GeneratorExit:
-        pass
-    os.close(fd)
-    return
+def demo_app():
+    import examples.framework_wsgi
+    return examples.framework_wsgi.application
 
-
-# after called, should return valid ``wsg_application(environ, start_response)`` function
+# after called, should return valid ``wsgi_application(environ, start_response)`` function
 FRAMEWORKS = {
     'django':wsgi_django,
-    'demo':lambda: clock_demo,
+    'demo':lambda: demo_app(),
 }
 
 
