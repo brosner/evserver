@@ -1,7 +1,6 @@
-to run this project try something like that, from the examples directory:
+To run this example simply run:
+python manage.py runevserver
 
+Other possibility is to try something like that:
 DJANGO_SETTINGS_MODULE=django_project.settings PYTHONPATH=. evserver -l 127.0.0.1:8000 --framework=django
-
-http://127.0.0.1/
-    simple clock example
 
