@@ -51,8 +51,8 @@ class Command(BaseCommand):
             print "Development server is running at http://%s:%s/" % (addr, port)
             print "Quit the server with %s." % quit_command
             try:
-                import evserver.evserver
-                evserver.evserver.main( ['--framework','django', '-l','%s:%s' %(addr,port), '-s','127.0.0.1:9999'] )
+                import evserver.main
+                evserver.main.main( ['--framework','django', '-l','%s:%s' %(addr,port), '-s','127.0.0.1:9999'] )
                 os.kill(pid, signal.SIGKILL)
                 os._exit(1)
             except KeyboardInterrupt:

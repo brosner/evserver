@@ -163,10 +163,11 @@ class Request:
         return self.out_dict, True, self.iterable_wrapper()
 
     def iterable_wrapper(self):
-        assert(not self.suspended)
         assert(self.iterable)
         iterable = self.iterable
         try:
+            if self.suspended:
+                return
             for content in iterable:
                 if self.suspended == True:
                     self.iterable = iterable
