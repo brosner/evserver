@@ -49,12 +49,17 @@ def status_page(environ, start_response):
     pagesize = resource.getpagesize()
 
     vm, rm, sm = meminfo.memory()
+    gc0, gc1, gc2 = gc.get_count()
     s.append(
-    '''######## PID:%(pid)i  total events:%(event_counter)i  objects in memory:%(gc_objects)i  file descriptors:%(file_descriptors)i/%(max_descriptors)i \n'''
+    '''######## PID:%(pid)i  total events:%(event_counter)i  python objects, unreachable:%(gc_unreachable)i total:%(gc_objects)i dirty:%(gc0)i/%(gc1)i/%(gc2)i file descriptors:%(file_descriptors)i/%(max_descriptors)i \n'''
     '''######## virt memory:%(vm).0fMiB  res memory:%(rm).0fMiB  sys cpu time:%(sys).3fs  user:%(user).3fs context switches, voluntary:%(vcs)i  involuntary:%(ics)i \n''' %
         {
             'pid':pid,
             'event_counter':server.event_counter,
+            'gc0': gc0,
+            'gc1': gc1,
+            'gc2': gc2,
+            'gc_unreachable': len(gc.garbage),
             'gc_objects':len(gc.get_objects()),
             'file_descriptors':len(os.listdir('/proc/%i/fd' % pid)),
             'max_descriptors':resource.getrlimit(resource.RLIMIT_NOFILE)[1],

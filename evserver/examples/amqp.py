@@ -1,5 +1,5 @@
 """
-Based on Barry Pederson code. Requires py-amqplib package.
+Based on Barry Pederson code. Requires py-amqplib 0.5 package.
 
 To run consumer server:
     evserver --exec="import evserver.examples.amqp; application=evserver.examples.amqp.wsgi_subscribe"
@@ -9,7 +9,7 @@ To produce message:
 import sys
 import time
 
-import amqplib.client_0_8 as blamqp
+import amqplib.client_0_8 as blamqp 
 import amqplib.nbclient_0_8 as nbamqp
 
 def publish(msg_body):
