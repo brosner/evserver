@@ -4,16 +4,14 @@ import gc
 import os
 import resource
 import meminfo
-import other.objgraph as objgraph
-import random
 
 def wsgi_application(environ, start_response):
-    if 'memleaks' in environ.get('PATH_INFO', ''):
-        return memleaks(environ, start_response)
-    else:
-        return status_page(environ, start_response)
+    return status_page(environ, start_response)
 
+'''
+import other.objgraph as objgraph
 import inspect
+import random
 
 def memleaks(environ, start_response):
     start_response("200 OK", [('Content-Type', 'text/plain')])
@@ -37,6 +35,7 @@ def memleaks(environ, start_response):
         #    ch = map(str, ch)
         #else:
     return ['\n'.join(map(str,b))] #[ '\n\n'.join(['\n'.join(map(str,b)), '\n'.join(map(str, ob)), '\n'.join(ch)] ) ]
+'''
 
 def status_page(environ, start_response):
     start_response("200 OK", [('Content-Type', 'text/plain'), ('Refresh', '3')])
