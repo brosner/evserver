@@ -18,7 +18,7 @@ pre {
 <script>
 var p = document.getElementById('p');
 function user_callback(data){
-    if(!data)
+    if(!data || data=='ping')
         return;
     var i = p.innerHTML
     p.innerHTML = i + '<br>'+data;

@@ -27,22 +27,21 @@ logging.getLogger('amqplib').setLevel(logging.INFO) # ignore msgs from there
 log = logging.getLogger(os.path.basename(__file__))
 
 
-cached_publisher_connection = None
-cached_publisher_channel = None
-
 def send_amqp_message(msg_body):
-    global cached_publisher_connection, cached_publisher_channel
-    if not cached_publisher_channel:
-        conn = amqp.Connection('localhost', userid='guest', password='guest')
-        ch = conn.channel()
-        ch.access_request('/data', active=True, write=True)
-        ch.exchange_declare('myfan', 'fanout', auto_delete=True)
+    # conn should be cached
+    conn = amqp.Connection('localhost', userid='guest', password='guest')
+    ch = conn.channel()
+    ch.access_request('/data', active=True, write=True)
+    ch.exchange_declare('myfan', 'fanout', auto_delete=True)
 
-        cached_publisher_connection = conn
-        cached_publisher_channel = ch
+    cached_publisher_connection = conn
+    cached_publisher_channel = ch
 
     msg = amqp.Message(msg_body, content_type='text/plain')
     cached_publisher_channel.basic_publish(msg, 'myfan')
+
+    ch.close()
+    conn.close()
 
 
 
@@ -56,7 +55,7 @@ def index(request):
 
     referer = request.META.get('HTTP_REFERER', '')
     agent = request.META.get('HTTP_USER_AGENT', '')
-    msg = cgi.escape('#%i %s: %r %r' % (counter, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), referer, agent))
+    msg = cgi.escape('#%i %s: %r %r' % (counter, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), agent, referer))
     send_amqp_message(msg)
     state_cache.append(msg)
     if len(state_cache) > 30: state_cache.pop(0) # remove first element
@@ -80,7 +79,8 @@ def set_ridiculously_high_buffers(sd):
                 break
 
 def comet(request):
-    t = evserver.transports.get_transport(request.GET.get('transport','basic'))
+    t = evserver.transports.get_transport(request.GET.get('transport','basic'),
+                                      callback=request.GET.get('callback','c0'))
 
     # setup the amqp subscriber
     msgs = []
@@ -142,3 +142,6 @@ def comet(request):
     return response
 
 
+
+def empty(request):
+    return HttpResponse('', mimetype="text/html")

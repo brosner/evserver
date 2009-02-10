@@ -9,5 +9,6 @@ urlpatterns = patterns('',
     (r'^$', views.index),
     (r'^index.html$', views.index),
     (r'^comet.html$', views.comet),
+    (r'^favicon.ico$', views.empty),
 )
 
