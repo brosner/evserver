@@ -8,6 +8,6 @@ urlpatterns = patterns('',
     (r'^static/(?P<path>.*)$', django.views.static.serve, {'document_root': settings.STATIC_DIR}),
     (r'^$', views.index),
     (r'^index.html$', views.index),
-    (r'^comet/$', views.comet),
+    (r'^comet.html$', views.comet),
 )
 

@@ -18,9 +18,11 @@ pre {
 <script>
 var p = document.getElementById('p');
 function user_callback(data){
+    if(!data)
+        return;
     var i = p.innerHTML
     p.innerHTML = i + '<br>'+data;
     p.scrollTop = p.scrollHeight;
 }
-close_comet_function = comet_connection('./comet/', user_callback);
+close_comet_function = comet_connection('./comet.html', user_callback);
 </script>

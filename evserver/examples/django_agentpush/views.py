@@ -20,7 +20,9 @@ import os.path
 import socket
 import evserver.transports
 import logging
+import cgi
 import amqplib.client_0_8 as amqp
+
 logging.getLogger('amqplib').setLevel(logging.INFO) # ignore msgs from there
 log = logging.getLogger(os.path.basename(__file__))
 
@@ -43,7 +45,6 @@ def send_amqp_message(msg_body):
     cached_publisher_channel.basic_publish(msg, 'myfan')
 
 
-import cgi
 
 # that is a raw hack that doesn't scale!
 counter = 0
@@ -55,7 +56,7 @@ def index(request):
 
     referer = request.META.get('HTTP_REFERER', '')
     agent = request.META.get('HTTP_USER_AGENT', '')
-    msg = cgi.escape('#%i: %r %r' % (counter, referer, agent))
+    msg = cgi.escape('#%i %s: %r %r' % (counter, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), referer, agent))
     send_amqp_message(msg)
     state_cache.append(msg)
     if len(state_cache) > 30: state_cache.pop(0) # remove first element
@@ -115,11 +116,13 @@ def comet(request):
                 except (TypeError,), e:
                     pass
 
+                if not msgs:
+                    yield t.write('ping')
                 while msgs:
                     msg = msgs.pop(0)
                     yield t.write(msg)
 
-                yield request.environ['x-wsgiorg.fdevent.readable'](conn.transport.sock)
+                yield request.environ['x-wsgiorg.fdevent.readable'](conn.transport.sock, 60)
         except GeneratorExit:
             pass
 
