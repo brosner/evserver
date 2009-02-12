@@ -36,11 +36,6 @@ function user_callback(data){
 //var cross_domain_domain = 'comet.' + ('' + document.location).split('/')[2];
 //close_comet_function = comet_crossdomain_connection('http://'+cross_domain_domain+'/static/crosscomet.html', '/comet.html', user_callback);
 
-a = function(){
-    close_comet_function = comet_connection('/comet.html', user_callback);
-    //comet_create_ajax('/index.html', 'GET', '', function(){});
-}
-a();
+close_comet_function = comet_connection('/comet.html', user_callback);
 
-//setTimeout(close_comet_function, 3000);
 </script>
