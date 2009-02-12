@@ -69,7 +69,8 @@ class IFrameTransport(Transport):
             <script type="text/javascript" src="./static/comet.js"></script>
 
             <script type="text/javascript" charset="utf-8">
-                document.domain = extract_xss_domain(document.domain);
+                try{comet_log('document.domain: ' + document.domain + ' new_domain:%(domain)s');}catch(e){};
+                document.domain = '%(domain)s';
             </script>
         </head>
         <body onLoad="try{parent.%(callback)s_reconnect();}catch(e){%(alert)s}">

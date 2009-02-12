@@ -236,22 +236,16 @@ If they will fix it, it's going to be a huge memory drainer.
 function schedule_connection_sse(url, callback) {
     var es = document.createElement('event-source');
     es.setAttribute('src', url +"&transport=sse");
-    document.body.appendChild(es);
+    // without this check opera 9.5 would make two connections.
+    if (opera.version() < 9.5) {
+        document.body.appendChild(es);
+    }
 
-    var last_events = {};
     var event_callback = function (event){
-        var k = event.data.substr(0,32);
-        if(last_events[k]){
-            comet_log('REPEATED EVENT: ' + event.data);
-            delete(last_events[k]);
-            return;
-        }
         if(callback){
             if(event.data)
                 callback(decode_utf8(unescape(event.data)));
         }
-
-        last_events[k] = true;
     };
 
     es.addEventListener('payload',   event_callback, false);
@@ -260,7 +254,9 @@ function schedule_connection_sse(url, callback) {
     var gc = function () {
         if(es){
             es.removeEventListener('payload',   event_callback, false);
-            document.body.removeChild(es);
+            if (opera.version() < 9.5) {
+                document.body.removeChild(es);
+            }
             es.src='';
         }
         event_callback=null;
@@ -307,6 +303,20 @@ transport_global = guess_transport();
 
 
 
+function comet_connection(url, user_callback_o, transport_local) {
+    // due to safari bug, we need to do actual stuff after setTimeout
+    var gc; // closure
+    setTimeout(function(){
+        gc = comet_connection_original(url, user_callback_o, transport_local);
+    }, 0);
+    return function(){
+        if(gc)
+            gc();
+        else
+            comet_log("don't cancel connection so fast!");
+    }
+}
+
 /********************************************************************/
 /** The Most Important Function. schedule connection for user **/
 /*
@@ -314,7 +324,7 @@ transport_global = guess_transport();
     user_callback - callback function, is going to be called each time with
             one parameter - data
     */
-function comet_connection(url, user_callback_o, transport_local) {
+function comet_connection_original(url, user_callback_o, transport_local) {
     var keepalive_timer = null;
     var connect_function = null;
     var garbage_function = null;
@@ -521,6 +531,7 @@ function getURLParam(strParamName){
 
 
 function comet_log(arg){
+    arg = '' + arg;
     arg = arg.substr(0, 512);
     if (typeof window.console !== 'undefined') {
       console.log(arg);
@@ -534,8 +545,8 @@ function comet_log(arg){
     */
 }
 
-
 function comet_raw_xhr() {
+    // also interesting: http://keelypavan.blogspot.com/2006/03/reusing-xmlhttprequest-object-in-ie.html
     try { return new ActiveXObject('MSXML3.XMLHTTP'); } catch(e) {}
     try { return new ActiveXObject('MSXML2.XMLHTTP.3.0'); } catch(e) {}
     try { return new ActiveXObject('Msxml2.XMLHTTP'); } catch(e) {}
@@ -543,6 +554,8 @@ function comet_raw_xhr() {
     try { return new XMLHttpRequest(); } catch(e) {}
     throw new Error('Could not find XMLHttpRequest or an alternative.');
 }
+
+
 
 function comet_create_xhr() {
     var xhr = comet_raw_xhr();
@@ -564,6 +577,10 @@ function comet_create_xhr() {
 
 function comet_create_ajax(url, method, data, onreadystatechange, mimetype) {
     var xhr = comet_create_xhr();
+
+    try { 
+        netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');
+    } catch (ex) { } 
     xhr.open(method, url, true);
     if(data){
         if(!mimetype)
@@ -584,8 +601,9 @@ function  kill_load_bar() {
       load_kill_ifr = document.createElement('iframe');
       hide_iframe(load_kill_ifr);
     }
-    document.body.appendChild(this.load_kill_ifr);
-    document.body.removeChild(this.load_kill_ifr);
+    document.body.appendChild(load_kill_ifr);
+    load_kill_ifr.src = 'about:blank';
+    document.body.removeChild(load_kill_ifr);
 }
 
 function comet_attach_unload_event(foo){

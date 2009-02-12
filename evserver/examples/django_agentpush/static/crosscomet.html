@@ -1,0 +1,42 @@
+<html>
+<head>
+    <script type="text/javascript" src="./comet.js"></script>
+
+    <script type="text/javascript" charset="utf-8">
+    document.domain = extract_xss_domain(document.domain);
+    </script>
+</head>
+<body>
+    <script type="text/javascript" charset="utf-8">
+        document.domain = extract_xss_domain(document.domain);
+        var callback = getURLParam('callback');
+
+        var transport = getURLParam('transport');
+        var gc = null;
+        function cb(data){
+            try{
+                parent[callback](data);
+            }catch(e){
+                alert(e);
+            };
+        }
+        try{
+            gc = comet_connection(parent[callback + '_uri'], cb, transport);
+            function gc2(){
+                if(gc){
+                    gc();
+                    delete(gc);
+                }
+                gc=null;
+            }
+            comet_attach_unload_event(gc2);
+            document.comet_garbage = gc2;
+            window.comet_garbage   = gc2;
+        }catch(e){
+            alert('got data but cant pass it from iframe. callback:' + callback + ' domain:>' +document.domain + '< error:' + e.message);
+        }
+
+    </script>
+
+</body>
+</html>

@@ -80,7 +80,8 @@ def set_ridiculously_high_buffers(sd):
 
 def comet(request):
     t = evserver.transports.get_transport(request.GET.get('transport','basic'),
-                                      callback=request.GET.get('callback','c0'))
+                                      callback=request.GET.get('callback','c0'),
+                                      domain=request.GET.get('domain',''))
 
     # setup the amqp subscriber
     msgs = []
