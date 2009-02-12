@@ -6,7 +6,7 @@ or
  PYTHONPATH="$HOME/amqplib-0.6:.." DJANGO_SETTINGS_MODULE=django_agentpush.settings
  evserver --listen 127.0.0.1:8080 --framework=django
 
-Beware, static files are served from ./static directory!
+Beware, static files are served from ./static directory! (relative to current!)
 '''
 
 from django.http import HttpResponse
@@ -43,6 +43,10 @@ def send_amqp_message(msg_body):
     ch.close()
     conn.close()
 
+    ch.connection = None
+    conn.channels = {}
+    conn.connection = None
+    conn.transport = None
 
 
 # that is a raw hack that doesn't scale!
@@ -135,6 +139,11 @@ def comet(request):
             conn.close()
         except Exception:
             pass
+
+        ch.connection = None
+        conn.channels = {}
+        conn.connection = None
+        conn.transport = None
 
     # build the response
     response = HttpResponse(iterator())

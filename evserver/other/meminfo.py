@@ -6,7 +6,7 @@ _proc_status = '/proc/%d/status' % os.getpid()
 _scale = {'kB': 1024.0, 'mB': 1024.0*1024.0,
           'KB': 1024.0, 'MB': 1024.0*1024.0}
 
-def memory():
+def _memory():
     global _proc_status, _scale
      # get pseudo file  /proc/<pid>/status
     try:
@@ -25,3 +25,10 @@ def memory():
         else:
             r.append(int (float(v[1]) * _scale[v[2]]) )
     return r
+
+
+def memory():
+    try:
+        return _memory()
+    except Exception:
+        return 0,0,0
