@@ -40,6 +40,8 @@ import request
 
 
 
+returnvalue = 1 # default return value from the program
+
 HTTP_CALLBACK  = ctypes.CFUNCTYPE(None, ctypes.POINTER(libevent.evhttp_request), ctypes.c_void_p)
 EVENT_CALLBACK = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_short, ctypes.c_void_p)
 CLOSE_CALLBACK = ctypes.CFUNCTYPE(None, ctypes.POINTER(libevent.evhttp_connection), ctypes.c_void_p)
@@ -314,7 +316,8 @@ def main_loop( bindings ):
         libevent.evhttp_free(http)
     libevent.event_base_free(base)
 
-    gc.collect()
     utils.clear_ref()
+    gc.collect()
 
+    return returnvalue
 

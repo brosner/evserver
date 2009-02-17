@@ -145,6 +145,7 @@ class Reloader:
         self.fam.update(timeout)
         if self.toreload and self.die:
             log.warning("Code has been changed in file %r. Quitting gracefully." % (self.toreload.keys()[0]))
+            server.returnvalue = 0
             libevent.event_loopexit(None)
         else:
             for fname, modules in self.toreload.items():
@@ -192,7 +193,8 @@ class Reloader:
                 if mod and getattr(mod, '__file__', None):
                     add_file(mod.__file__, mod)
             except AttributeError:
-                pass
+                if getattr(omod, '__file__', None):
+                    add_file(omod.__file__, omod)
             return omod
         __builtin__.__import__ = new_import
         return

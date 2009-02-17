@@ -231,11 +231,13 @@ def main(args):
         reloader.Reloader(die=die)
 
     if not options.statusaddr:
-        server.main_loop( [(host, port, application),] )
+        returnvalue = server.main_loop( [(host, port, application),] )
+        sys.exit(returnvalue)
     else:
         import status
-        server.main_loop( [(host, port, application),
+        returnvalue = server.main_loop( [(host, port, application),
                             (shost, sport, status.wsgi_application)] )
+        sys.exit(returnvalue)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
