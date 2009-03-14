@@ -207,6 +207,7 @@ def root_handler(evreq, req, event_type, evt=None):
             assert(event_type == REQUEST_CLOSE)
             if evreq.contents.evcon:
                 # BUG in libevent, memleak if conn is broken
+                '''
                 event = libevent.event()
                 timeval = libevent.timeval()
                 timeval.tv_sec  = 0
@@ -215,6 +216,8 @@ def root_handler(evreq, req, event_type, evt=None):
                 byref_timev = ctypes.byref(timeval)
                 libevent.evtimer_set(byref_event, freeevcon_callback_ptr, utils.set_userdata( (evreq.contents.evcon, byref_event, byref_timev) )  )
                 libevent.evtimer_add(byref_event, byref_timev)
+                '''
+                pass
 
         if req.buf:
             libevent.evbuffer_free(req.buf)
