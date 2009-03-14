@@ -1,0 +1,1 @@
+PYTHONPATH="..:$HOME/amqplib-0.6/" DJANGO_SETTINGS_MODULE=django_agentpush.settings evserver --listen 127.0.0.1:9001 --status 127.0.0.1:9901 --framework=django                                            

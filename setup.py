@@ -1,8 +1,15 @@
-from setuptools import setup, find_packages
-from setuptools.dist import Distribution
 import os
 import subprocess
 import re
+
+try:
+    from setuptools import setup, find_packages
+    from setuptools.dist import Distribution
+except ImportError:
+    from distutils.core import setup, Distribution
+    w = os.walk('evserver')
+    find_packages = lambda:[r.replace('/','.') for r, d, _ in w if '.' not in r]
+
 
 version = "0.01"
 
@@ -32,7 +39,8 @@ setup(
     author = "Marek Majkowski",
     url = "http://code.google.com/p/evserver/wiki/Documentation",
     license = "BSD",
-    package_data = {'': ['*.so', '*dylib', '*.dll', '*.js', '*.html']},
+    package_data = {'': ['evserver', '*.cfg', '*.so', '*.dylib', '*.dll', 
+                         '*.js', '*.html', 'README', '*.sh']},
     packages = find_packages(),
     package_dir = {'':"."},
 
