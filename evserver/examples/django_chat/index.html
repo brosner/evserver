@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <script type="text/javascript" src="/static/comet.js"></script> 
+    <style type="text/css">
+        body, select, input { font-family: arial, sans-serif;}
+        body, html{height:100%;}
+        body {
+            font-size: 83%;
+            font-family: arial, sans-serif;
+            border-collapse: separate;
+        }
+        #outputbox {border:1px solid grey;height:200px;overflow:scroll;}
+        #inputbox {border:1px solid black}
+    </style>
+
+</head>
+<body>
+    <pre id="outputbox">
+    </pre>
+    <input id="inputbox">
+
+<script>
+    var inputbox = document.getElementById("inputbox");
+    var outputbox = document.getElementById("outputbox");
+
+    inputbox.focus();
+    if(inputbox.addEventListener ) {
+        inputbox.addEventListener('keydown',this.keyHandler,false);
+    } else if(inputbox.attachEvent ) {
+        inputbox.attachEvent('onkeydown',this.keyHandler); /* damn IE hack */
+    }
+
+    var msgs = '';
+    function keyHandler(e) {
+        if(e.keyCode == 13) {
+            setTimeout(function(){
+                if(msgs)
+                    msgs += '\n';
+                msgs += inputbox.value;
+                inputbox.value = '';
+                send();
+            },0)
+            if(e.preventDefault) {
+                e.preventDefault();
+            }
+            return false;
+        }
+    }
+
+    var waiting = false;
+    function send(){
+        if(!msgs)
+            return;
+        if(waiting)
+            return;
+        waiting = true;
+        var payload = msgs;
+        msgs = '';
+        send_ajax(payload, function(data){
+            waiting=false; send();
+        });
+    }
+
+    function send_ajax(payload, callback){
+        var payload = payload;
+        var xhr;
+        var ors = function(){
+            if(!xhr) return;
+            if(xhr.readyState==4){
+                var response = xhr.responseText;
+                if(xhr.status!=200){
+                    comet_log('Fatal ajax error, retrying in few seconds. Payload: ' + payload);
+                    setTimeout(function(){
+                        xhr = comet_create_ajax('./push/', 'POST', payload, ors);
+                    }, 8000);
+                    return;
+                }
+                try{
+                    xhr.abort();
+                }catch(e){};
+                delete(xhr);
+                xhr = null;
+                callback(response)
+            }
+        }
+        xhr = comet_create_ajax('./push/', 'POST', payload, ors);
+    }
+
+    function url(){
+        return "./pop/?a=" + (''+Math.random()).substr(2,6);
+    }
+
+    function user_callback(data){
+        if(data == 'ping')
+            return
+        outputbox.innerHTML = outputbox.innerHTML  + '<br>'+ data;
+        outputbox.scrollTop = outputbox.scrollHeight;
+    }
+
+    var gc = comet_connection(url, user_callback);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+requirements:
+  pyamqplib 0.6
+  rabbitmq server
+  django 1.0x
+  
+  
+Running:
+python manage.py runevserver

@@ -11,7 +11,7 @@ except ImportError:
     find_packages = lambda:[r.replace('/','.') for r, d, _ in w if '.' not in r]
 
 
-version = "0.01"
+version = "0.10"
 
 try:
     proc = subprocess.Popen(["svn", "info"], stdout=subprocess.PIPE)
