@@ -52,7 +52,7 @@ class Command(BaseCommand):
             print "Quit the server with %s." % quit_command
             try:
                 import evserver.main
-                evserver.main.main( ['--framework','django', '-l','%s:%s' %(addr,port), '-s','127.0.0.1:9999'] )
+                evserver.main.main( ['--framework','django', '-l','%s:%s' %(addr,port)] )
                 os.kill(pid, signal.SIGKILL)
                 os._exit(1)
             except KeyboardInterrupt:
